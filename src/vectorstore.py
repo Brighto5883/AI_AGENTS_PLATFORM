@@ -12,6 +12,7 @@ class FaissVectorStore:
         os.makedirs(self.persist_dir, exist_ok=True)
         self.index = None
         self.metadata = []
+        self.chunks = []  # NEW: store chunks for BM25 access in search.py
         self.embedding_model = embedding_model
         self.model = SentenceTransformer(embedding_model)
         self.chunk_size = chunk_size
@@ -22,6 +23,7 @@ class FaissVectorStore:
         print(f"[INFO] Building vector store from {len(documents)} raw documents...")
         emb_pipe = EmbeddingPipeline(model_name=self.embedding_model, chunk_size=self.chunk_size, chunk_overlap=self.chunk_overlap)
         chunks = emb_pipe.chunk_documents(documents)
+        self.chunks = chunks  # NEW: save chunks as instance variable
         embeddings = emb_pipe.embed_chunks(chunks)
         metadatas = [{"text": chunk.page_content} for chunk in chunks]
         self.add_embeddings(np.array(embeddings).astype('float32'), metadatas)
@@ -40,18 +42,29 @@ class FaissVectorStore:
     def save(self):
         faiss_path = os.path.join(self.persist_dir, "faiss.index")
         meta_path = os.path.join(self.persist_dir, "metadata.pkl")
+        chunks_path = os.path.join(self.persist_dir, "chunks.pkl")  # NEW
         faiss.write_index(self.index, faiss_path)
         with open(meta_path, "wb") as f:
             pickle.dump(self.metadata, f)
-        print(f"[INFO] Saved Faiss index and metadata to {self.persist_dir}")
+        with open(chunks_path, "wb") as f:  # NEW: save chunks to disk
+            pickle.dump(self.chunks, f)
+        print(f"[INFO] Saved Faiss index, metadata, and chunks to {self.persist_dir}")
 
     def load(self):
         faiss_path = os.path.join(self.persist_dir, "faiss.index")
         meta_path = os.path.join(self.persist_dir, "metadata.pkl")
+        chunks_path = os.path.join(self.persist_dir, "chunks.pkl")  # NEW
         self.index = faiss.read_index(faiss_path)
         with open(meta_path, "rb") as f:
             self.metadata = pickle.load(f)
-        print(f"[INFO] Loaded Faiss index and metadata from {self.persist_dir}")
+        if os.path.exists(chunks_path):  # NEW: load chunks if they exist
+            with open(chunks_path, "rb") as f:
+                self.chunks = pickle.load(f)
+        else:
+            # Fallback: reconstruct chunk texts from metadata for BM25
+            self.chunks = [type('Chunk', (), {'page_content': m["text"]})() for m in self.metadata]
+            print("[WARN] chunks.pkl not found — reconstructed from metadata. Re-run build_from_documents to fix.")
+        print(f"[INFO] Loaded Faiss index, metadata, and chunks from {self.persist_dir}")
 
     def search(self, query_embedding: np.ndarray, top_k: int = 5):
         D, I = self.index.search(query_embedding, top_k)
