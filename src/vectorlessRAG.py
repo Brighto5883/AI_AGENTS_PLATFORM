@@ -1,10 +1,10 @@
-import os, json, time
+import os, json
 from pageindex import PageIndexClient
 from langchain.agents import create_agent
 from langchain_groq import ChatGroq
 from dotenv import load_dotenv
 from .pageindex_utils import get_document_id
-from typing import Any
+from pydantic import BaseModel, Field
 
 load_dotenv()
 
@@ -12,16 +12,29 @@ PAGEINDEX_API_KEY = os.getenv('PAGEINDEX_API_KEY')
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 
 pi_client = PageIndexClient(api_key=PAGEINDEX_API_KEY)
-model1 = ChatGroq(model='qwen/qwen3.6-27b')
+model1 = ChatGroq(model='qwen/qwen3-32b') # qwen/qwen3.6-27b
 model2 = ChatGroq(model='llama-3.3-70b-versatile')
 
-agent1 = create_agent(
-    model = model1,
-    system_prompt="""
-    You are a specialized AI assistant for Kenya road design.
-    Use the tools below to answer questions accurately.
-    """
-)
+class TreeSearchResult(BaseModel):
+    thinking: str = Field(
+        description="Reasoning for selecting the nodes"
+    )
+
+    node_list: list[str] = Field(
+        description="Relevant node IDs"
+    )
+
+structured_model = model1.with_structured_output(
+    TreeSearchResult,
+     method="json_mode"
+     )
+# agent1 = create_agent(
+#     model = model1,
+#     system_prompt="""
+#     You are a specialized AI assistant for Kenya road design.
+#     Use the tools below to answer questions accurately.
+#     """
+# )
 
 agent2 = create_agent(
     model = model2,
@@ -86,12 +99,9 @@ def llm_tree_search(query: str, tree: list) -> dict:
 
 
     # Sending the Prompt to agent to return relevane node_ids
-    response = agent1.invoke(
-        {'messages':[{'role':'user',
-                      'content': prompt}]}
-    )
+    result = structured_model.invoke(prompt)
 
-    return response['messages'][-1].content
+    return result.model_dump()
 
 
 # ======================================================================================================

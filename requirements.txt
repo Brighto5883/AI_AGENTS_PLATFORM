@@ -21,3 +21,8 @@ litellm
 numpy
 rank_bm25
 redis
+fastapi[standard]
+fastapi-users[sqlalchemy]
+uvicorn[standard]
+imagekitio
+aiosqlite

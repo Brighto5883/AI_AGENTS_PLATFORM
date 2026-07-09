@@ -6,6 +6,13 @@ from typing import List, Any
 from sentence_transformers import SentenceTransformer
 from .embedding import EmbeddingPipeline
 
+from dotenv import load_dotenv
+load_dotenv()
+
+import os
+
+os.environ["HF_TOKEN"] = os.getenv("HF_TOKEN")
+
 class FaissVectorStore:
     def __init__(self, persist_dir: str = "faiss_store", embedding_model: str = "all-MiniLM-L6-v2", chunk_size: int = 1000, chunk_overlap: int = 200):
         self.persist_dir = persist_dir

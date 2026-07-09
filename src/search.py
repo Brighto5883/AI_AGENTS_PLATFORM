@@ -1,4 +1,5 @@
 import os
+import litellm
 import numpy as np
 from dotenv import load_dotenv
 from rank_bm25 import BM25Okapi  # NEW: BM25 keyword search
@@ -7,6 +8,13 @@ from langchain_groq import ChatGroq
 from langchain_litellm import ChatLiteLLM
 from litellm.cost_calculator import cost_per_token
 from .ai_agent import build_graph
+from litellm.caching import Cache
+
+litellm.cache = Cache(
+    type="redis",
+    host="localhost",
+    port=6379
+)
 
 load_dotenv(override=True)
 
@@ -99,7 +107,11 @@ class RAGSearch:
 
         # Step 5: Send merged context to LLM — same as before
         prompt = f"""Summarize the following context for the query: '{query}'\n\nContext:\n{context}\n\nSummary:"""
-        response = self.graph.invoke({"messages": [{"role": "user", "content": prompt}]})
+        response = self.graph.invoke(
+            {"messages": [{"role": "user", "content": prompt}]},
+            caching = True  # Enable caching for this invocation
+            )
+        
         ai_message = response['messages'][-1]
 
         usage = ai_message.usage_metadata
@@ -107,17 +119,21 @@ class RAGSearch:
         output_tokens = usage["output_tokens"]
         total_tokens = usage["total_tokens"]
 
+        document = ai_message.response_metadata['document']
         model = ai_message.response_metadata['model']
 
-        prompt_cost, completion_cost = cost_per_token(
-            model=model,
-            prompt_tokens=input_tokens,
-            completion_tokens=output_tokens
-        )
+        try:
+            prompt_cost, completion_cost = cost_per_token(
+                model=model,
+                prompt_tokens=input_tokens,
+                completion_tokens=output_tokens
+            )
 
-        total_cost = prompt_cost + completion_cost
+            total_cost = prompt_cost + completion_cost
+        except Exception:
+             prompt_cost = completion_cost = total_cost = 0.0
 
-        return response['messages'][-1].content, total_cost
+        return response['messages'][-1].content, document, total_cost
 
 # Example usage
 if __name__ == "__main__":
