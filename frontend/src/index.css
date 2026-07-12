@@ -1,0 +1,12 @@
+/* Global styles */
+@import "./styling/Global.css";
+
+/* Shared button styles */
+@import "./styling/Buttons.css";
+
+/* Page styles */
+@import "./styling/Home.css";
+@import "./styling/Auth.css";
+@import "./styling/Chat.css";
+@import "./styling/Navbar.css";
+@import "./styling/Footer.css";
