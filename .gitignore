@@ -7,7 +7,6 @@ backend/**/*.pyc
 backend/.pytest_cache/
 backend/.mypy_cache/
 backend/.ruff_cache/
-
 backend/.env
 backend/test.db
 
@@ -16,11 +15,38 @@ backend/test.db
 # =========================
 frontend/node_modules/
 frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+frontend/logs
+frontend/*.log
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
 
 # =========================
-# VS Code
+# Env files (all locations)
 # =========================
-.vscode/
+.env
+*.env.local
+
+# =========================
+# Redis
+# =========================
+dump.rdb
+
+# =========================
+# Editor
+# =========================
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
 # =========================
 # OS
