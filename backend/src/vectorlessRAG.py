@@ -5,6 +5,7 @@ from langchain_groq import ChatGroq
 from dotenv import load_dotenv
 from .pageindex_utils import get_document_id
 from pydantic import BaseModel, Field
+from litellm.cost_calculator import cost_per_token
 
 load_dotenv()
 
@@ -129,7 +130,11 @@ def generate_answer(query: str, nodes: list) -> str:
     Instructs the LLM to cite section titles and page numbers.
     """
     if not nodes:
-        return "⚠️ No relevant sections found in the document."
+        return (
+            "⚠️ No relevant sections found in the document.",
+            "",
+            0.0,
+        )
     
     # Build context string from retrieved nodes
     context_parts = []
@@ -157,7 +162,42 @@ def generate_answer(query: str, nodes: list) -> str:
                       'content': prompt}]}
     )
 
-    return response['messages'][-1].content
+    ai_message = response["messages"][-1]
+
+    usage = ai_message.usage_metadata
+
+    input_tokens = usage["input_tokens"]
+    output_tokens = usage["output_tokens"]
+
+    print(ai_message.response_metadata)
+    print(ai_message.usage_metadata)
+    model = ai_message.response_metadata["model"]
+
+    try:
+        prompt_cost, completion_cost = cost_per_token(
+            model=model,
+            prompt_tokens=input_tokens,
+            completion_tokens=output_tokens,
+        )
+
+        total_cost = prompt_cost + completion_cost
+
+    except Exception:
+        total_cost = 0.0
+
+    documents = list({
+        node["source"]
+        for node in nodes
+        if "source" in node
+    })
+
+    document = ", ".join(documents)
+
+    return (
+        ai_message.content,
+        document,
+        total_cost,
+    )
 
 # ======================================================================================================
 
@@ -179,6 +219,6 @@ def vectorless_rag(query: str, tree: list) -> str: # Verbose: bool=True can be u
     nodes = find_nodes_by_ids(tree, node_ids)
     
     # Step 3: Generate answer
-    answer = generate_answer(query, nodes)
+    answer, document, cost = generate_answer(query, nodes)
     
-    return answer
+    return answer, document, cost

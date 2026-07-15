@@ -9,13 +9,7 @@ from langchain_groq import ChatGroq
 from langchain_litellm import ChatLiteLLM
 from litellm.cost_calculator import cost_per_token
 from .ai_agent import build_graph
-from litellm.caching import Cache
-
-litellm.cache = Cache(
-    type="redis",
-    host="localhost",
-    port=6379
-)
+from app.cache import is_cache_enabled
 
 load_dotenv(override=True)
 
@@ -110,7 +104,8 @@ class RAGSearch:
         prompt = f"""Summarize the following context for the query: '{query}'\n\nContext:\n{context}\n\nSummary:"""
         response = self.graph.invoke(
             {"messages": [{"role": "user", "content": prompt}]},
-            caching = True  # Enable caching for this invocation
+            caching=is_cache_enabled()
+            # caching = True  # Enable caching for this invocation
             )
         print(response)
         

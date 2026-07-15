@@ -9,18 +9,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from src.search import RAGSearch
 from src.vectorlessRAG import vectorless_rag, get_pageindex_tree
-import litellm
-from litellm.caching import Cache
+from app.cache import configure_cache
 import uuid
-
-litellm.cache = Cache(
-    type="redis",
-    host="localhost",
-    port=6379
-)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    configure_cache()
     await create_db_and_tables()
     yield
 
