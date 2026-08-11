@@ -10,11 +10,11 @@ function Home() {
         <div className="homepage">
 
             <h1 className="homepage-title">
-                Road Design Agent
+                Brightone AI Labs
             </h1>
 
             <p className="introparagraph">
-                AI Assistant for Kenyan Road Design, Highway Engineering and Construction Specifications.
+                AI Agents for assistance and simplification of your daily tasks.
             </p>
 
             <div className="homepage-buttons">

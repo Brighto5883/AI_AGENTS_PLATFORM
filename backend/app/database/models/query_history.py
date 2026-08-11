@@ -1,0 +1,24 @@
+import uuid
+from sqlalchemy.dialects.postgresql import UUID
+from app.database.db import Base
+from sqlalchemy.orm import relationship
+from sqlalchemy import Column
+from sqlalchemy import ( Column, ForeignKey, String, 
+Text, Float, Boolean, DateTime )
+
+class QueryHistory(Base):
+
+    __tablename__ = "query_history"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4) 
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False) 
+    query = Column(Text, nullable=False) 
+    method = Column(String, nullable=False) 
+    answer = Column(Text, nullable=False) 
+    document = Column(String, nullable=False) 
+    cost = Column(Float, nullable=False)
+
+    user = relationship(
+        "User",
+        back_populates="queries"
+    )

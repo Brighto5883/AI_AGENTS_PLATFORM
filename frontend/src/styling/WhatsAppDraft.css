@@ -1,0 +1,142 @@
+.draft-review-layout {
+  display: flex;
+  height: 100vh; /* dashboard-content already reserves top padding, no need to subtract here */
+}
+
+.draft-list {
+  width: 320px;
+  border-right: 1px solid #e0e0e0;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.draft-list h2 {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  color: #444;
+}
+
+.draft-list-item {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border: none;
+  border-radius: 8px;
+  background: #f5f5f5;
+  cursor: pointer;
+}
+
+.draft-list-item.active { background: #d9fdd3; }
+
+.draft-preview { font-size: 0.9rem; color: #222; }
+.draft-timestamp { font-size: 0.75rem; color: #888; margin-top: 0.25rem; }
+
+.draft-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #e5ddd5;
+  min-width: 0;
+}
+
+.draft-panel-empty { margin: auto; color: #777; }
+
+.thread-header {
+  padding: 0.85rem 1.25rem;
+  background: #fff;
+  border-bottom: 1px solid #d5cdc4;
+  display: flex;
+  flex-direction: column;
+}
+
+.thread-phone { font-size: 0.8rem; color: #666; }
+
+.thread-scroll {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem;
+}
+
+.thread-bubble {
+  max-width: 70%;
+  padding: 0.6rem 0.85rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.thread-bubble.inbound {
+  align-self: flex-start;
+  background: #ffffff;
+  border-radius: 12px 12px 12px 0;
+}
+
+.thread-bubble.outbound {
+  align-self: flex-end;
+  background: #d9fdd3;
+  border-radius: 12px 12px 0 12px;
+}
+
+.draft-error {
+  color: #d33;
+  font-size: 0.85rem;
+  padding: 0 1.25rem;
+}
+
+.compose-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  background: #f0f0f0;
+  border-top: 1px solid #d5cdc4;
+}
+
+.compose-textarea {
+  flex: 1;
+  border: none;
+  border-radius: 20px;
+  padding: 0.65rem 1rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+  resize: none;
+  outline: none;
+  background: #fff;
+  line-height: 1.4;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.compose-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-reject {
+  padding: 0.6rem 1.1rem;
+  border-radius: 20px;
+  border: 1px solid #d33;
+  background: transparent;
+  color: #d33;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-confirm-send {
+  padding: 0.6rem 1.1rem;
+  border-radius: 20px;
+  border: none;
+  background: #25d366;
+  color: white;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-confirm-send:disabled,
+.btn-reject:disabled { opacity: 0.5; cursor: not-allowed; }

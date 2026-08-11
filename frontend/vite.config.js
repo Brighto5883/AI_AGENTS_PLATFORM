@@ -1,7 +1,26 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
-})
+    plugins: [react()],
+
+  server: {
+        allowedHosts: [
+              "linked-babied-ruby.ngrok-free.dev",
+        ],
+        
+    
+        proxy: {
+            "/api": {
+                target: "http://localhost:8000",
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/api/, ""),
+            },
+
+            "/webhooks": {
+                target: "http://localhost:8000",
+                changeOrigin: true,
+            },
+        },
+    },
+});

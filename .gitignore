@@ -9,6 +9,7 @@ backend/.mypy_cache/
 backend/.ruff_cache/
 backend/.env
 backend/test.db
+backend/app/A_LEARNING_FOLDER
 
 # =========================
 # Frontend
@@ -24,6 +25,7 @@ frontend/yarn-debug.log*
 frontend/yarn-error.log*
 frontend/pnpm-debug.log*
 frontend/lerna-debug.log*
+frontend/A_LEARNING_FOLDER
 
 # =========================
 # Env files (all locations)

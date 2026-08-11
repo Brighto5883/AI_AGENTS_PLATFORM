@@ -15,7 +15,7 @@ function Navbar() {
         <nav className="navbar">
 
             <div className="navbar-logo">
-                <h2>Road Design Agent</h2>
+                <h2>Brightone AI Labs</h2>
             </div>
 
             <div className="navbar-links">

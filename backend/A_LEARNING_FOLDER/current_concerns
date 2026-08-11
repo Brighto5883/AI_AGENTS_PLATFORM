@@ -1,0 +1,19 @@
+# NEWLY ADDED FILES
+# GET /whatsapp/conversations/{id}/messages for;
+    # app/api/schemas/whatsapp.py
+    # app/services/whatsapp_service.py edit
+    # Edited app/api/routes/drafts.py -- added one route
+
+
+# CHAT GPT
+
+1. What happens when a message from a phone gets the rate-limit, is that message
+    lost and if yes, I think it's not good, we should at least wait and get the 
+    messages to be processed after the rate_limit window or what's your suggestion?
+
+... Now let's build the proper async DB-writing version of the callback plus the
+   LLMUsageLog model/migration 
+
+# CLAUDE
+
+1.

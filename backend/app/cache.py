@@ -1,10 +1,13 @@
 import logging
 
 import redis
+import redis.asyncio as aioredis
+
 import litellm
 from litellm.caching import Cache
 
-from app.settings import settings
+from app.config.settings import settings
+
 
 logger = logging.getLogger(__name__)
 
@@ -62,3 +65,24 @@ def configure_cache():
 
 def is_cache_enabled():
     return _CACHE_ENABLED
+
+
+_redis_client: aioredis.Redis | None = None
+
+
+def get_redis_client() -> aioredis.Redis | None:
+    """
+    A dedicated async Redis connection for application-level caching
+    (e.g. conversation history in memory/redis.py) — separate from
+    LiteLLM's own internal response cache configured above.
+    """
+    global _redis_client
+    
+    if _redis_client is None and settings.ENABLE_CACHE:
+        _redis_client = aioredis.Redis(
+            host=settings.REDIS_HOST,
+            port=settings.REDIS_PORT,
+            socket_connect_timeout=1,
+            socket_timeout=1,
+        )
+    return _redis_client

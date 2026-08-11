@@ -3,35 +3,23 @@ import { lazy } from "react";
 const Home = lazy(() => import("../pages/Home"));
 const Login = lazy(() => import("../pages/Login"));
 const Register = lazy(() => import("../pages/Register"));
-const Chat = lazy(() => import("../pages/Chat"));
+const Dashboard = lazy(() => import("../pages/Dashboard"));
+const RoadDesignChat = lazy(() => import("../pages/RoadDesignChat"));
+const WhatsAppDrafts = lazy(() => import("../pages/WhatsAppDrafts"));
 const NotFound = lazy(() => import("../pages/NotFound"));
 
-const routes = [
-    {
-        path: "",
-        element: <Home />,
-        requiresAuth: false,
-    },
-    {
-        path: "login",
-        element: <Login />,
-        requiresAuth: false,
-    },
-    {
-        path: "register",
-        element: <Register />,
-        requiresAuth: false,
-    },
-    {
-        path: "chat",
-        element: <Chat />,
-        requiresAuth: true,
-    },
-    {
-        path: "*",
-        element: <NotFound />,
-        requiresAuth: false,
-    },
+// Rendered inside MainLayout — no auth required
+export const publicRoutes = [
+  { path: "", element: <Home /> },
+  { path: "login", element: <Login /> },
+  { path: "register", element: <Register /> },
 ];
 
-export default routes;
+// Rendered inside AuthenticatedLayout — auth required (checked once, at layout level)
+export const dashboardRoutes = [
+  { path: "dashboard", element: <Dashboard /> },
+  { path: "chat", element: <RoadDesignChat /> },
+  { path: "drafts", element: <WhatsAppDrafts /> },
+];
+
+export const notFoundRoute = { path: "*", element: <NotFound /> };

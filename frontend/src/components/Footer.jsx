@@ -3,7 +3,7 @@ import "../styling/Footer.css";
 function Footer() {
     return (
         <footer className="footer">
-            <p>&copy; {new Date().getFullYear()} KENYA-ROAD-DESIGN-AGENT</p>
+            <p>&copy; {new Date().getFullYear()} BRIGHTONE-AI-PLATFORM</p>
         </footer>
     );
 }

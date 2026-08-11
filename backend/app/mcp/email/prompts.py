@@ -1,0 +1,1 @@
+EMAIL_AGENT_SYSTEM_PROMPT = '' # For an Email assistant agent

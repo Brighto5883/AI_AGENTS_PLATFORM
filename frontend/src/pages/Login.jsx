@@ -25,7 +25,7 @@ function Login() {
 
             setMessage("Login successful!");
 
-            navigate("/chat");
+            navigate("/dashboard");
 
         } catch (error) {
 
