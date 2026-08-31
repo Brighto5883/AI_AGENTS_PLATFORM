@@ -1,9 +1,13 @@
 import uvicorn
 
-from app.app import api
+from app.config.logging import configure_logging
+
+#from app.app import api
 
 
 if __name__ == "__main__":
+    configure_logging()
+    
     uvicorn.run(
         "app.app:api",
         host="0.0.0.0",

@@ -1,5 +1,7 @@
 from datetime import datetime
+
 from pydantic import BaseModel
+
 from app.database.models.whatsapp_conversation import MessageDirection
 
 

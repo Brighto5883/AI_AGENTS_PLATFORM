@@ -1,5 +1,6 @@
-from app.database.models.whatsapp_conversation import MessageDirection, WhatsAppMessage
 from sqlalchemy import select
+
+from app.database.models.whatsapp_conversation import MessageDirection, WhatsAppMessage
 
 
 async def fetch_recent_messages(conversation_id: str, session, limit: int = 10) -> list[dict]:

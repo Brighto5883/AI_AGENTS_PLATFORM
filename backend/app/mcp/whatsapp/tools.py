@@ -1,10 +1,10 @@
 # app/mcp/whatsapp/tools.py
 
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.mcp.whatsapp.resources import (
-    get_customer_profile,
-    get_recent_conversation,
     get_business_faqs,
+    get_customer_profile,
     get_writing_style,
 )
 

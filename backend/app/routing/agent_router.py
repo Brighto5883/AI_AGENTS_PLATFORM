@@ -1,7 +1,8 @@
+from app.agents.email_agent import EmailAssistant
 from app.agents.road_design_agent import RoadDesignAgent
 from app.agents.whatsapp_agent import WhatsAppAssistant
-from app.agents.email_agent import EmailAssistant
-from app.api.schemas.enums import AgentType, RetrievalMethod
+from app.api.schemas.enums import AgentType
+from app.knowledge.context import KnowledgeContext
 
 
 class AgentRouter:
@@ -23,11 +24,13 @@ class AgentRouter:
         agent: AgentType,
         query: str,
         context: dict | None = None,
+        knowledge: KnowledgeContext | None = None,
     ):
 
         selected_agent = self.agents[agent]
 
         return await selected_agent.invoke(
             query=query,
-            context=context
+            context=context,
+            knowledge=knowledge,
         )

@@ -23,3 +23,8 @@ pageindex_state.json
 # OS
 .DS_Store__pycache__/
 *.pyc
+
+# Rough-Work .md files
+learning_order.md
+production_steps.md
+Prompt_Center.md

@@ -2,9 +2,10 @@
 import asyncio
 import time
 
+from fastapi import Depends, HTTPException
+
 from app.cache import get_redis_client
 from app.database.users import current_active_user
-from fastapi import Depends, HTTPException
 
 REQUESTS_PER_MINUTE = 20  # tune per plan tier later
 

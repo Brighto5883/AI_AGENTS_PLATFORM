@@ -1,0 +1,20 @@
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
+
+@import "nativewind/theme";
+
+@theme {
+  /* Development page colors */
+  --color-homepage: #797D81; /* Home - light blue */
+  --color-page2: #dcfce7; /* Onboarding - light green */
+  --color-page3: #fef3c7; /* Sign In - light yellow */
+  --color-page4: #fce7f3; /* Sign Up - light pink */
+
+
+  /* Text colors */
+  --color-page1-text: #1e3a8a;
+  --color-page2-text: #166534;
+  --color-page3-text: #92400e;
+  --color-page4-text: #9d174d;
+}

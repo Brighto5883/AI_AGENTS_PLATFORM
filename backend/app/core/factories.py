@@ -3,6 +3,9 @@ from app.agents.road_design_agent import RoadDesignAgent
 from app.agents.whatsapp_agent import WhatsAppAssistant
 from app.integrations.whatsapp.client import WhatsAppClient
 from app.integrations.whatsapp.transcription import TranscriptionClient
+from app.marketplace.services.listing_service import ListingService
+from app.marketplace.services.transaction_service import TransactionService
+from app.marketplace.services.wanted_post_service import WantedPostService
 from app.memory.service import MemoryService
 from app.routing.agent_router import AgentRouter
 from app.services.agent_service import AgentService
@@ -70,3 +73,14 @@ def create_transcription_client():
 
 def create_memory_service():
     return MemoryService()
+
+def create_listing_service():
+    return ListingService()
+
+
+def create_wanted_post_service():
+    return WantedPostService()
+
+
+def create_transaction_service():
+    return TransactionService()

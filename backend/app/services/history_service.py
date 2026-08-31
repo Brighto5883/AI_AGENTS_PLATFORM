@@ -1,4 +1,5 @@
 from sqlalchemy import select
+from uuid import UUID
 
 from app.database.models.query_history import QueryHistory
 
@@ -7,7 +8,7 @@ class HistoryService:
 
     async def get_history(
         self,
-        user_id,
+        user_id: UUID,
         session,
     ):
 
@@ -24,12 +25,14 @@ class HistoryService:
     async def delete_history(
         self,
         query_id,
+        user_id: UUID,
         session,
     ):
 
         result = await session.execute(
             select(QueryHistory).where(
-                QueryHistory.id == query_id
+                QueryHistory.id == query_id,
+                QueryHistory.user_id == user_id,
             )
         )
 

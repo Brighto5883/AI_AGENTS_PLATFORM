@@ -1,17 +1,16 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.database.session import get_async_session
-from app.database.models.user import User
-from app.database.users import current_active_user
-from app.api.schemas.enums import DraftStatus
 from app.api.schemas.drafts import (
-    DraftReplyResponse,
     DraftApproveRequest,
     DraftRejectRequest,
+    DraftReplyResponse,
 )
+from app.api.schemas.enums import DraftStatus
 from app.api.schemas.whatsapp import ConversationThreadResponse
 from app.core.container import container
-
+from app.database.models.user import User
+from app.database.session import get_async_session
+from app.database.users import current_active_user
 
 router = APIRouter(prefix="/drafts", tags=["Drafts"])
 

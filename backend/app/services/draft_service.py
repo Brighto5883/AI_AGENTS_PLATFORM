@@ -1,9 +1,11 @@
-from datetime import datetime, timezone
+from uuid import UUID
+from datetime import UTC, datetime
+
 from fastapi import HTTPException
 from sqlalchemy import select
 
-from app.database.models.draft_reply import DraftReply
 from app.api.schemas.enums import DraftStatus
+from app.database.models.draft_reply import DraftReply
 
 
 class DraftService:
@@ -42,7 +44,11 @@ class DraftService:
         return draft
 
     async def approve(
-        self, draft_id: str, reviewer_id: str, session, edited_content: str | None = None
+        self, 
+        draft_id: str, 
+        reviewer_id: UUID, 
+        session, 
+        edited_content: str | None = None
     ) -> DraftReply:
         draft = await self.get_draft(draft_id, session)
         self._ensure_pending(draft)
@@ -54,14 +60,18 @@ class DraftService:
             draft.status = DraftStatus.APPROVED
 
         draft.reviewed_by = reviewer_id
-        draft.reviewed_at = datetime.now(timezone.utc)
+        draft.reviewed_at = datetime.now(UTC)
 
         await session.commit()
         await session.refresh(draft)
         return draft
 
     async def reject(
-        self, draft_id: str, reviewer_id: str, session, reason: str | None = None
+        self, 
+        draft_id: str, 
+        reviewer_id: UUID, 
+        session, 
+        reason: str | None = None
     ) -> DraftReply:
         draft = await self.get_draft(draft_id, session)
         self._ensure_pending(draft)
@@ -69,7 +79,7 @@ class DraftService:
         draft.status = DraftStatus.REJECTED
         draft.rejection_reason = reason
         draft.reviewed_by = reviewer_id
-        draft.reviewed_at = datetime.now(timezone.utc)
+        draft.reviewed_at = datetime.now(UTC)
 
         await session.commit()
         await session.refresh(draft)
@@ -87,7 +97,7 @@ class DraftService:
         await self.whatsapp_service.send_approved_draft(draft, session)
 
         draft.status = DraftStatus.SENT
-        draft.sent_at = datetime.now(timezone.utc)
+        draft.sent_at = datetime.now(UTC)
 
         await session.commit()
         await session.refresh(draft)

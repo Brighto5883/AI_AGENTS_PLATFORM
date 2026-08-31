@@ -1,6 +1,5 @@
-from pathlib import Path
-
 from app.core.paths import RAW_DATA_DIR
+
 
 def get_manuals():
 

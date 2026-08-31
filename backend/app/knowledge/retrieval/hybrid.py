@@ -1,35 +1,67 @@
 import os
-import litellm
-import numpy as np
 from pathlib import Path
+
+import numpy as np
 from dotenv import load_dotenv
 from rank_bm25 import BM25Okapi  # NEW: BM25 keyword search
+
 from app.knowledge.indexing.vectorstore import FaissVectorStore
 
 load_dotenv(override=True)
 
 class RAGSearch:
-    def __init__(self, persist_dir: str = "faiss_store", embedding_model: str = "all-MiniLM-L6-v2"):
-        self.vectorstore = FaissVectorStore(persist_dir, embedding_model)
+    def __init__(
+        self, persist_dir: str = "faiss_store", 
+        embedding_model: str = "all-MiniLM-L6-v2",
+        documents=None,
+    ):
+        self.vectorstore = FaissVectorStore(
+            persist_dir,
+            embedding_model
+        )
 
         # Load or build vectorstore
-        faiss_path = os.path.join(persist_dir, "faiss.index")
-        meta_path = os.path.join(persist_dir, "metadata.pkl")
-        if not (os.path.exists(faiss_path) and os.path.exists(meta_path)):
-            from app.knowledge.ingestion.loader import load_all_documents
-            docs = load_all_documents("data")
-            self.vectorstore.build_from_documents(docs)
+        faiss_path = os.path.join(
+            persist_dir, 
+            "faiss.index",
+        )
+        meta_path = os.path.join(
+            persist_dir, 
+            "metadata.pkl"
+        )
+        if not (
+            os.path.exists(faiss_path) 
+            and os.path.exists(meta_path)
+        ):
+            if documents is None:
+                from app.knowledge.ingestion.loader import load_all_documents
+
+                documents = load_all_documents()
+
+            self.vectorstore.build_from_documents(
+                documents
+            )
         else:
             self.vectorstore.load()
 
         # NEW: Build BM25 index from the same chunks used in vector store
         # Tokenise each chunk's text by splitting on whitespace
-        chunk_texts = [chunk.page_content for chunk in self.vectorstore.chunks]
-        tokenized_chunks = [text.lower().split() for text in chunk_texts]
-        self.bm25 = BM25Okapi(tokenized_chunks)
-        self.chunk_texts = chunk_texts  # keep plain texts for context assembly
-        print(f"[INFO] BM25 index built over {len(chunk_texts)} chunks.")
+        chunk_texts = [
+            chunk.page_content 
+            for chunk in self.vectorstore.chunks
+        ]
 
+        tokenized_chunks = [
+            text.lower().split() 
+            for text in chunk_texts
+        ]
+
+        self.bm25 = BM25Okapi(
+            tokenized_chunks
+        )
+        
+        self.chunk_texts = chunk_texts  # keep plain texts for context assembly
+    
     # NEW: BM25 keyword search — returns ranked list of chunk indices
     def _bm25_search(self, query: str, top_k: int = 5):
         tokenized_query = query.lower().split()

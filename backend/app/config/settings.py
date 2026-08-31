@@ -30,15 +30,28 @@ class Settings(BaseSettings):
     # Authentication
     JWT_SECRET: str
 
+    #YOUTUBE
+    YOUTUBE_API_KEY: str
+
     #WhatsApp Messaging
     WHATSAPP_PHONE_NUMBER_ID: str
     WHATSAPP_ACCESS_TOKEN: str
     WHATSAPP_WEBHOOK_VERIFY_TOKEN: str
 
+    #UPLOAD_SIZES
+    MAX_UPLOAD_SIZE_BYTES: int = 20 * 1024 * 1024
+
+        # Marketplace media
+    MAX_MARKETPLACE_IMAGE_SIZE_BYTES: int = 10 * 1024 * 1024
+    MAX_MARKETPLACE_IMAGES: int = 5
+
+    # Marketplace moderation
+    GEMINI_SCANNER_MODEL: str = "gemini-2.5-flash-lite"
+    
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",
     )
 
 
-settings = Settings()
+settings = Settings()  # pyright: ignore[reportCallIssue]

@@ -1,6 +1,7 @@
 
 from pydantic import BaseModel
 
+
 class QueryHistoryResponse(BaseModel):
     id: str
     user_id: str

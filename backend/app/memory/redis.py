@@ -1,8 +1,6 @@
 import json
 import logging
 
-from redis.exceptions import RedisError
-
 from app.cache import get_redis_client
 
 logger = logging.getLogger(__name__)

@@ -1,37 +1,31 @@
 import uuid
-from typing import Optional
+
 from fastapi import Depends, Request
-from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin, models
+from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin
 from fastapi_users.authentication import (
     AuthenticationBackend,
     BearerTransport,
-    JWTStrategy
+    JWTStrategy,
 )
-from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi_users.db import SQLAlchemyUserDatabase
-from app.database.session import get_async_session
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.config.settings import settings
 from app.database.models.user import User
+from app.database.session import get_async_session
 
-
-import os
-from dotenv import load_dotenv
-load_dotenv()
-
-SECRET = os.getenv('JWT_SECRET')
-if not SECRET:
-    raise RuntimeError('JWT_SECRET is not set in the .env file.')
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]): # 1 usage
-    reset_password_token_secret = SECRET
-    verification_token_secret = SECRET
+    reset_password_token_secret = settings.JWT_SECRET
+    verification_token_secret = settings.JWT_SECRET
 
-    async def on_after_register(self, user: User, request: Optional[Request] = None):
+    async def on_after_register(self, user: User, request: Request | None = None):
         print(f"User {user.id} has registered.")
 
-    async def on_after_forgot_password(self, user: User, token: str, request: Optional[Request] = None):
+    async def on_after_forgot_password(self, user: User, token: str, request: Request | None = None):
         print(f"User {user.id} has forgot their password. Reset token: {token}")
 
-    async def on_after_request_verify(self, user: User, token: str, request: Optional[Request] = None):
+    async def on_after_request_verify(self, user: User, token: str, request: Request | None = None):
         print(f"Verification requested for user {user.id}. Verification token: {token}")
 
 async def get_user_db(session: AsyncSession = Depends(get_async_session)):
@@ -43,7 +37,10 @@ async def get_user_manager(user_db: SQLAlchemyUserDatabase = Depends(get_user_db
 bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
 
 def get_jwt_strategy(): #1 usage
-    return JWTStrategy(secret=SECRET, lifetime_seconds=3600)
+    return JWTStrategy(
+        secret=settings.JWT_SECRET, 
+        lifetime_seconds=3600,
+    )
 
 auth_backend = AuthenticationBackend(
     name="jwt",

@@ -1,12 +1,11 @@
-from app.database.users import (
-    fastapi_users,
-    auth_backend,
-)
-
 from app.api.schemas.auth import (
-    UserRead,
     UserCreate,
+    UserRead,
     UserUpdate,
+)
+from app.database.users import (
+    auth_backend,
+    fastapi_users,
 )
 
 

@@ -1,6 +1,6 @@
 import httpx
-from app.config.settings import settings
 
+from app.config.settings import settings
 
 GRAPH_API_VERSION = "v21.0"
 
@@ -29,20 +29,42 @@ class WhatsAppClient:
             },
         )
 
+
+    def _get_client(self) -> httpx.AsyncClient:
+        if self._client is None:
+            raise RuntimeError(
+                "WhatsAppClient has not been initialized. "
+                "Call initialize() before making requests."
+            )
+
+        return self._client
+
     async def get_media_url(self, media_id: str) -> str:
         """Step 1 of Meta's two-step media fetch: media ID -> temporary download URL."""
-        response = await self._client.get(
+        client = self._get_client()
+        
+        response = await client.get(
             f"https://graph.facebook.com/{GRAPH_API_VERSION}/{media_id}"
         )
         response.raise_for_status()
         return response.json()["url"]
 
+
     async def download_media(self, media_url: str) -> bytes:
         """Step 2: the URL from get_media_url is itself auth-gated, needs the same bearer token."""
-        response = await self._client.get(media_url)
+        client = self._get_client()
+        
+        response = await client.get(media_url)
         response.raise_for_status()
-        print(f"[media download] status={response.status_code} bytes={len(response.content)} content-type={response.headers.get('content-type')}")
+
+        print(
+                f"[media download] status={response.status_code}"
+                f"bytes={len(response.content)}"
+                f"content-type={response.headers.get('content-type')}"
+            )
+
         return response.content
+
 
     async def send_text_message(self, to_phone: str, body: str) -> dict:
         payload = {
@@ -52,10 +74,14 @@ class WhatsAppClient:
             "text": {"body": body},
         }
 
-        response = await self._client.post(self.base_url, json=payload)
+        client = self._get_client()
+
+        response = await client.post(self.base_url, json=payload)
         response.raise_for_status()
         return response.json()
 
+
     async def close(self):
-        if self._client:
+        if self._client is not None:
             await self._client.aclose()
+            self._client = None

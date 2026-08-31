@@ -1,10 +1,11 @@
 import uuid
+
+from sqlalchemy import Column, Float, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID
-from app.database.db import Base
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column
-from sqlalchemy import ( Column, ForeignKey, String, 
-Text, Float, Boolean, DateTime )
+
+from app.database.db import Base
+
 
 class QueryHistory(Base):
 

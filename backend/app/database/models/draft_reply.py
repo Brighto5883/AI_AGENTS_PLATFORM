@@ -1,12 +1,16 @@
 # Data layer — an AI-proposed reply, awaiting (or having received) human review
 import uuid
-from datetime import datetime, timezone
-from sqlalchemy import String, Text, DateTime, ForeignKey, Enum as SAEnum
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.database.db import Base
-from app.api.schemas.enums import DraftStatus
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
-from sqlalchemy.dialects.postgresql import UUID
+from uuid import UUID
+
+from sqlalchemy import DateTime, ForeignKey, String, Text
+from sqlalchemy import Enum as SAEnum
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.api.schemas.enums import DraftStatus
+from app.database.db import Base
 
 if TYPE_CHECKING:
     from app.database.models.whatsapp_conversation import (
@@ -34,10 +38,12 @@ class DraftReply(Base):
     )
 
     reviewed_by: Mapped[UUID | None] = mapped_column(
-        ForeignKey("users.id"), nullable=True
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id"), 
+        nullable=True
     )
 
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

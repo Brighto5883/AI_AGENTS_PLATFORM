@@ -7,20 +7,21 @@ from app.core.factories import (
     create_draft_service,
     create_email_agent,
     create_history_service,
+    create_listing_service,
     create_memory_service,
     create_road_design_agent,
+    create_transaction_service,
     create_transcription_client,
+    create_wanted_post_service,
     create_whatsapp_agent,
     create_whatsapp_client,
     create_whatsapp_service,
 )
-from app.llm.gateway import register_llm_callbacks
 
 
 class Container:
 
     def __init__(self):
-        register_llm_callbacks()
 
         self.road_design_agent = create_road_design_agent()
 
@@ -59,6 +60,12 @@ class Container:
         )
 
         self.memory_service = create_memory_service()
+
+        self.listing_service = create_listing_service()
+
+        self.wanted_post_service = create_wanted_post_service()
+
+        self.transaction_service = create_transaction_service()
 
     async def initialize(self):
         await asyncio.gather(

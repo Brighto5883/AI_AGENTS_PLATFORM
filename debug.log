@@ -1,0 +1,21 @@
++/etc/zsh/zshenv:15> [[ -z /home/infinit3-ke/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin || /home/infinit3-ke/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin == /bin:/usr/bin ]]
++start-dev.sh:2> SESSION=ai_agents_dev 
++start-dev.sh:4> tmux kill-session -t ai_agents_dev
++start-dev.sh:6> tmux new-session -d -s ai_agents_dev -n infra
++start-dev.sh:7> sleep 0.5
++start-dev.sh:8> tmux send-keys -t ai_agents_dev:infra 'docker compose up -d' C-m
++start-dev.sh:10> tmux new-window -t ai_agents_dev -n backend
++start-dev.sh:11> sleep 0.5
++start-dev.sh:12> tmux send-keys -t ai_agents_dev:backend 'cd backend && uv run python main.py' C-m
++start-dev.sh:14> tmux new-window -t ai_agents_dev -n frontend
++start-dev.sh:15> sleep 0.5
++start-dev.sh:16> tmux send-keys -t ai_agents_devontend 'cd frontend && npm run dev' C-m
+can't find pane: ai_agents_devontend
++start-dev.sh:18> tmux new-window -t ai_agents_dev -n ngrok
++start-dev.sh:19> sleep 0.5
++start-dev.sh:20> tmux send-keys -t ai_agents_dev:ngrok 'ngrok http 5173' C-m
++start-dev.sh:22> tmux new-window -t ai_agents_dev -n mobile
++start-dev.sh:23> sleep 0.5
++start-dev.sh:24> tmux send-keys -t ai_agents_dev:mobile 'cd mob_app && npx expo start --lan' C-m
++start-dev.sh:26> tmux attach -t ai_agents_dev
+[exited]

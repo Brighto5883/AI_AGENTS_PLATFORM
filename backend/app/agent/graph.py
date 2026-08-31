@@ -1,6 +1,5 @@
 from langchain_core.messages import SystemMessage
-
-from langgraph.graph import START, END, StateGraph
+from langgraph.graph import START, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from app.agent.state import AgentState

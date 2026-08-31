@@ -1,16 +1,19 @@
-import os
-import hashlib, time
-from pathlib import Path
+import hashlib
 import json
-from pageindex import PageIndexClient
+import os
+import time
+from pathlib import Path
+
 from dotenv import load_dotenv
+from pageindex import PageIndexClient
+
+from app.core.paths import PAGEINDEX_STATE_FILE
 
 load_dotenv()
 
 PAGEINDEX_API_KEY = os.getenv('PAGEINDEX_API_KEY')
 pi_client = PageIndexClient(api_key=PAGEINDEX_API_KEY)
 
-from app.core.paths import PAGEINDEX_STATE_FILE
 STATE_FILE = PAGEINDEX_STATE_FILE
 
 
@@ -35,7 +38,7 @@ def get_document_id(pdf_path: str) -> str:
     # Load upload cache
     # -----------------------------
     if STATE_FILE.exists() and STATE_FILE.stat().st_size > 0:
-        with open(STATE_FILE, "r") as f:
+        with open(STATE_FILE) as f:
             state = json.load(f)
     else:
         state = {}

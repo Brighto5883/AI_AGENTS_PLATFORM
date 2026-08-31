@@ -1,13 +1,12 @@
 import logging
 
+import litellm
 import redis
 import redis.asyncio as aioredis
-
-import litellm
-from litellm.caching import Cache
+from litellm.caching.caching import Cache
+from litellm.types.caching import LiteLLMCacheType
 
 from app.config.settings import settings
-
 
 logger = logging.getLogger(__name__)
 
@@ -44,9 +43,9 @@ def configure_cache():
         client.ping()
 
         litellm.cache = Cache(
-            type="redis",
+            type=LiteLLMCacheType.REDIS,
             host=settings.REDIS_HOST,
-            port=settings.REDIS_PORT,
+            port=str(settings.REDIS_PORT),
         )
 
         _CACHE_ENABLED = True

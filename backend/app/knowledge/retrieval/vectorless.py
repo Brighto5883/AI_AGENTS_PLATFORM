@@ -1,12 +1,15 @@
-import os, json
-from pageindex import PageIndexClient
+import json
+import os
+
+from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain_groq import ChatGroq
-from dotenv import load_dotenv
-from app.knowledge.pageindex.pageindex_utils import get_document_id
-from pydantic import BaseModel, Field
 from litellm.cost_calculator import cost_per_token
+from pageindex import PageIndexClient
+from pydantic import BaseModel, Field
+
 from app.core.paths import RAW_DATA_DIR
+from app.knowledge.pageindex.pageindex_utils import get_document_id
 
 load_dotenv()
 
@@ -54,7 +57,7 @@ def get_doc_id():
     global _doc_id
 
     if _doc_id is None:
-        _doc_id = get_document_id(PDF_PATH)
+        _doc_id = get_document_id(str(PDF_PATH))
 
     return _doc_id
 
@@ -112,7 +115,10 @@ def llm_tree_search(query: str, tree: list) -> dict:
     # Sending the Prompt to agent to return relevane node_ids
     result = structured_model.invoke(prompt)
 
-    return result.model_dump()
+    if isinstance(result, BaseModel):
+        return result.model_dump()
+
+    return result
 
 
 # ======================================================================================================
@@ -134,7 +140,7 @@ def find_nodes_by_ids(tree: list, target_ids: list) -> list:
 
 # ── Generate answer from retrieved nodes ─────────────────────────────────────
 
-def generate_answer(query: str, nodes: list) -> str:
+def generate_answer(query: str, nodes: list) -> tuple[str, str, float]:
     """
     Takes retrieved nodes as context and generates a grounded answer.
     Instructs the LLM to cite section titles and page numbers.
@@ -213,7 +219,7 @@ def generate_answer(query: str, nodes: list) -> str:
 
 # ── The complete Vectorless RAG function ─────────────────────────────────────
 
-def vectorless_rag(query: str, tree: list) -> str: # Verbose: bool=True can be used to display different function level outputs
+def vectorless_rag(query: str, tree: list) -> tuple[str, str, float]: # Verbose: bool=True can be used to display different function level outputs
     """
     Full end-to-end PageIndex RAG pipeline:
     

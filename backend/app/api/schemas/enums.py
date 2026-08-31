@@ -1,18 +1,18 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class AgentType(str, Enum):
+class AgentType(StrEnum):
     ROAD = "road"
     WHATSAPP = "whatsapp"
     EMAIL = "email"
 
 
-class RetrievalMethod(str, Enum):
+class RetrievalMethod(StrEnum):
     AUTO = "auto"
     HYBRID = "hybrid"
     VECTORLESS = "vectorless"
 
-class DraftStatus(str, Enum):
+class DraftStatus(StrEnum):
     PENDING = "pending"    # agent produced it, no human has looked yet
     APPROVED = "approved"  # human approved as-is
     EDITED = "edited"      # human changed the content, then approved

@@ -1,8 +1,12 @@
 # app/mcp/whatsapp/resources.py
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.database.models.whatsapp_conversation import WhatsAppConversation, WhatsAppMessage
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database.models.whatsapp_conversation import (
+    WhatsAppConversation,
+    WhatsAppMessage,
+)
 
 BUSINESS_FAQS = {
     "hours": "We are open Monday to Friday, 8am to 5pm EAT.",

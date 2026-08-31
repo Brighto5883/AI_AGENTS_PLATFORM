@@ -1,0 +1,91 @@
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "esModuleInterop": true,
+        "jsx": "react-native",
+        "lib": [
+            "dom",
+            "esnext"
+        ],
+        "module": "preserve",
+        "moduleDetection": "force",
+        "moduleResolution": "bundler",
+        "customConditions": [
+            "react-native"
+        ],
+        "noEmit": true,
+        "resolveJsonModule": true,
+        "skipLibCheck": true,
+        "target": "esnext",
+        "strict": true,
+        "paths": {
+            "@/*": [
+                "./*"
+            ]
+        },
+        "allowSyntheticDefaultImports": true,
+        "resolvePackageJsonExports": true,
+        "resolvePackageJsonImports": true,
+        "useDefineForClassFields": true,
+        "noImplicitAny": true,
+        "noImplicitThis": true,
+        "strictNullChecks": true,
+        "strictFunctionTypes": true,
+        "strictBindCallApply": true,
+        "strictPropertyInitialization": true,
+        "strictBuiltinIteratorReturn": true,
+        "alwaysStrict": true,
+        "useUnknownInCatchVariables": true
+    },
+    "files": [
+        "./expo-env.d.ts",
+        "./nativewind-env.d.ts",
+        "./app-example/constants/theme.ts",
+        "./app-example/hooks/use-color-scheme.ts",
+        "./app-example/hooks/use-color-scheme.web.ts",
+        "./app-example/hooks/use-theme-color.ts",
+        "./services/api.ts",
+        "./services/authService.ts",
+        "./services/roadService.ts",
+        "./services/tokenService.ts",
+        "./types/auth.ts",
+        "./types/road.ts",
+        "./app/_layout.tsx",
+        "./app/index.tsx",
+        "./app/login.tsx",
+        "./app/onboarding.tsx",
+        "./app/(auth)/sign-in.tsx",
+        "./app/(auth)/sign-up.tsx",
+        "./app-example/app/_layout.tsx",
+        "./app-example/app/modal.tsx",
+        "./app-example/app/(tabs)/_layout.tsx",
+        "./app-example/app/(tabs)/explore.tsx",
+        "./app-example/app/(tabs)/index.tsx",
+        "./app-example/components/external-link.tsx",
+        "./app-example/components/haptic-tab.tsx",
+        "./app-example/components/hello-wave.tsx",
+        "./app-example/components/parallax-scroll-view.tsx",
+        "./app-example/components/themed-text.tsx",
+        "./app-example/components/themed-view.tsx",
+        "./app-example/components/ui/collapsible.tsx",
+        "./app-example/components/ui/icon-symbol.ios.tsx",
+        "./app-example/components/ui/icon-symbol.tsx",
+        "./components/AgentCard.tsx",
+        "./.expo/types/router.d.ts"
+    ],
+    "include": [
+        "**/*.ts",
+        "**/*.tsx",
+        ".expo/types/**/*.ts",
+        "expo-env.d.ts",
+        "nativewind-env.d.ts"
+    ],
+    "exclude": [
+        "/home/infinit3-ke/projects/AI_AGENTS_PLATFORM/mob_app/node_modules",
+        "/home/infinit3-ke/projects/AI_AGENTS_PLATFORM/mob_app/babel.config.js",
+        "/home/infinit3-ke/projects/AI_AGENTS_PLATFORM/mob_app/metro.config.js",
+        "/home/infinit3-ke/projects/AI_AGENTS_PLATFORM/mob_app/jest.config.js",
+        "/home/infinit3-ke/projects/AI_AGENTS_PLATFORM/mob_app/android",
+        "/home/infinit3-ke/projects/AI_AGENTS_PLATFORM/mob_app/ios"
+    ]
+}

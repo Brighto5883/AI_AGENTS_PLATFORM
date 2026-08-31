@@ -6,7 +6,7 @@ export default defineConfig({
 
   server: {
         allowedHosts: [
-              "linked-babied-ruby.ngrok-free.dev",
+              "squatter-finite-dean.ngrok-free.dev",
         ],
         
     

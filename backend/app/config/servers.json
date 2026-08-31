@@ -1,12 +1,42 @@
 {
     "mcpServers": {
-        "whats_biz": {
+        "shared": {
+            "transport": "stdio",
+            "command": "uv",
+            "args": [
+                "run",
+                "-m",
+                "app.mcp.shared.server"
+            ]
+        },
+
+        "road": {
+            "transport": "stdio",
+            "command": "uv",
+            "args": [
+                "run",
+                "-m",
+                "app.mcp.road.server"
+            ]
+        },
+
+        "whatsapp": {
             "transport": "stdio",
             "command": "uv",
             "args": [
                 "run",
                 "-m",
                 "app.mcp.whatsapp.server"
+            ]
+        },
+
+        "email": {
+            "transport": "stdio",
+            "command": "uv",
+            "args": [
+                "run",
+                "-m",
+                "app.mcp.email.server"
             ]
         }
     }

@@ -3,7 +3,7 @@
 from mcp.server.fastmcp import FastMCP
 
 from app.database.session import get_session_context
-from app.mcp.whatsapp import tools, resources, prompts
+from app.mcp.whatsapp import prompts, resources, tools
 
 whatsapp_mcp = FastMCP("whatsapp-assistant")
 

@@ -1,13 +1,13 @@
 from sqlalchemy import select
 
+from app.api.schemas.enums import AgentType
+from app.database.models.draft_reply import DraftReply
 from app.database.models.whatsapp_conversation import (
-    WhatsAppConversation,
-    WhatsAppMessage,
     MessageDirection,
     MessageType,
+    WhatsAppConversation,
+    WhatsAppMessage,
 )
-from app.database.models.draft_reply import DraftReply
-from app.api.schemas.enums import AgentType
 
 
 class WhatsAppService:

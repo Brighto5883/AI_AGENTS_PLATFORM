@@ -1,0 +1,9 @@
++ SESSION=ai_agents_dev
++ tmux kill-session -t ai_agents_dev
++ tmux new-session -d -s ai_agents_dev -n infra 'docker compose up -d; zsh'
++ tmux new-window -t ai_agents_dev -n backend 'cd backend && uv run python main.py'
++ tmux new-window -t ai_agents_dev -n frontend 'cd frontend && npm run dev'
++ tmux new-window -t ai_agents_dev -n ngrok 'ngrok http 5173'
++ tmux new-window -t ai_agents_dev -n mobile 'cd mob_app && npx expo start --lan'
++ tmux attach -t ai_agents_dev
+[exited]

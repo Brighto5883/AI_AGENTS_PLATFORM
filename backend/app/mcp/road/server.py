@@ -1,9 +1,6 @@
 from mcp.server.fastmcp import FastMCP
+
 from app.mcp.road.resources import get_manuals
-from app.mcp.road.tools import (
-    hybrid_search,
-    vectorless_search,
-)
 
 # SERVER
 mcp = FastMCP("road_design_server")
@@ -39,41 +36,6 @@ def get_manual(manual_name: str):
     }
 
 
-# TOOLS
-@mcp.tool()
-def search_and_summarize(query: str):
-    """
-    Search the Kenyan Road Design Manuals and return
-    a summarized answer.
-    """
-    return hybrid_search(query)
-
-@mcp.tool()
-def vectorless(query: str):
-    return vectorless_search(query)
-
-
 if __name__ == "__main__":
     mcp.run()
 
-
-
-
-
-
-
-# from mcp.server.fastmcp import FastMCP
-
-# from app.mcp.tools.hybrid import hybrid_search
-
-# mcp = FastMCP("road_design_server")
-
-
-# @mcp.tool(
-#     name="hybrid_search",
-#     description="Search the Kenyan Road Design manuals."
-# )
-# def hybrid_search_tool(
-#     query: str
-# ):
-#     return hybrid_search(query)

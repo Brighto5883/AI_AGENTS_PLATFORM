@@ -1,9 +1,10 @@
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, Request
+
 from app.api.dependencies.rate_limit import wait_for_rate_limit_slot
 from app.config.settings import settings
 from app.core.container import container
 from app.database.models.whatsapp_conversation import MessageType
 from app.database.session import get_session_context
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, Request
 
 router = APIRouter(prefix="/webhooks/whatsapp", tags=["WhatsApp Webhook"])
 

@@ -1,16 +1,13 @@
 from fastapi import APIRouter, Depends
 
-from app.database.session import get_async_session
-from app.database.models.user import User
-from app.database.users import current_active_user
-
 from app.api.schemas.history import (
     QueryHistoryDelete,
     QueryHistoryResponse,
 )
-
 from app.core.container import container
-
+from app.database.models.user import User
+from app.database.session import get_async_session
+from app.database.users import current_active_user
 
 router = APIRouter(
     prefix="/feed",

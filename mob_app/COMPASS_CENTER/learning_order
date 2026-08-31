@@ -1,0 +1,84 @@
+REACT_NATIVE LEARNING ORDER
+PHASE 1 — React Native fundamentals
+1. View
+2. Text
+3. Styling
+4. Flexbox
+5. Components
+6. Props
+7. State
+8. Forms/input
+9. Lists
+10. Effects
+11. API calls
+12. Navigation
+
+              ↓
+
+PHASE 2 — Production mobile development
+13. TypeScript deeply in RN
+14. Authentication
+15. Secure storage
+16. Forms + validation
+17. Error/loading states
+18. File uploads
+19. Notifications
+20. Deep linking
+21. App permissions
+22. EAS builds
+
+              ↓
+
+PHASE 3 — Your FastAPI integration
+23. REST APIs
+24. JWT
+25. WebSockets
+26. Streaming responses
+27. Background tasks
+28. File handling
+29. Database interaction
+30. API architecture(Calls, Cancellations...etc)
+
+              ↓
+
+PHASE 4 — AI Agents
+31. LLM fundamentals
+32. Structured outputs
+33. Tool calling
+34. Agent state
+35. LangGraph
+36. Memory
+37. RAG
+38. Multi-agent systems
+39. Human-in-the-loop
+40. Agent observability
+
+              ↓
+
+PHASE 5 — AI Agents Platform
+41. Agent dashboard
+42. Agent configuration
+43. Agent execution
+44. Run history
+45. Conversations
+46. Approval workflows
+47. Streaming agent responses
+48. Usage/billing
+49. Notifications
+50. Production deployment
+
+
+
+IN-PHASE-STEPS
+18. File uploads
+
+Step 1 → Select a file on the device
+Step 2 → Understand the selected-file object
+Step 3 → Store/display the selected file in state
+Step 4 → Send the file to FastAPI
+Step 5 → Handle upload loading/error/success states
+Step 6 → Connect uploads to an Agent
+
+
+OWN_STEPS
+1. Created utils, utils/access.ts and types/Home.ts
