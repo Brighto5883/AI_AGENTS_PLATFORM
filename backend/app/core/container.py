@@ -89,9 +89,13 @@ class Container:
             listing_image_service=self.listing_image_service,
         )
 
-        self.wanted_post_service = create_wanted_post_service()
+        self.wanted_post_service = create_wanted_post_service(
+            billing_service=self.billing_service,
+        )
 
-        self.transaction_service = create_transaction_service(self.pricing_service)
+        self.transaction_service = create_transaction_service(
+            billing_service=self.billing_service,
+        )
 
         self.payment_service = create_payment_service()
 

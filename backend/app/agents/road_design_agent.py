@@ -1,5 +1,5 @@
 from app.agent.base_agent import BaseAgent
-from app.api.schemas.enums import AgentType
+from app.core.enums import AgentType
 from app.mcp.road.prompts import ROAD_AGENT_SYSTEM_PROMPT
 
 

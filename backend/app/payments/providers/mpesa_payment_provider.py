@@ -8,6 +8,7 @@ import httpx
 from app.config.settings import settings
 from app.payments.enums import PaymentProviderType
 from app.payments.payment_provider import PaymentProvider
+from app.utils.phone import normalize_kenyan_phone_number
 from app.payments.payment_schemas import (
     PaymentInitiationResult,
     PaymentRequest,
@@ -27,7 +28,7 @@ class MpesaPaymentProvider(PaymentProvider):
         timestamp = self._generate_timestamp()
         password = self._generate_password(timestamp)
 
-        phone_number = normalize_phone_number(
+        phone_number = normalize_kenyan_phone_number(
             request.phone_number
         )
 
@@ -37,6 +38,13 @@ class MpesaPaymentProvider(PaymentProvider):
                 rounding=ROUND_DOWN,
             )
         )
+
+        account_reference = str(request.reference_id).replace("-", "")[:12]
+        transaction_description = {
+            "platform_donation": "Platform donation",
+            "marketplace_listing_fee": "Marketplace listing",
+            "marketplace_connection_fee": "Marketplace connection",
+        }.get(request.purpose, "Platform payment")[:13]
 
         payload = {
             "BusinessShortCode": settings.MPESA_SHORTCODE,
@@ -48,11 +56,11 @@ class MpesaPaymentProvider(PaymentProvider):
             "PartyB": settings.MPESA_SHORTCODE,
             "PhoneNumber": phone_number,
             "CallBackURL": settings.MPESA_CALLBACK_URL,
-            "AccountReference": str(request.reference_id),
-            "TransactionDesc": request.purpose,
+            "AccountReference": account_reference,
+            "TransactionDesc": transaction_description,
         }
 
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=15.0) as client:
             response = await client.post(
                 f"{settings.MPESA_BASE_URL}/mpesa/stkpush/v1/processrequest",
                 headers={
@@ -91,7 +99,7 @@ class MpesaPaymentProvider(PaymentProvider):
 
 # ================================================================================================
     async def _get_access_token(self) -> str:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=15.0) as client:
             response = await client.get(
                 f"{settings.MPESA_BASE_URL}/oauth/v1/generate",
                 params={
@@ -132,17 +140,3 @@ class MpesaPaymentProvider(PaymentProvider):
         ).decode()
 
 # =====================================================================================
-def normalize_phone_number(phone_number: str) -> str:
-    phone_number = phone_number.strip().replace(" ", "")
-
-    if phone_number.startswith("+254"):
-        return phone_number[1:]
-
-    if phone_number.startswith("254"):
-        return phone_number
-
-    if phone_number.startswith("0"):
-        return f"254{phone_number[1:]}"
-
-    raise ValueError("Invalid Kenyan phone number.")
-

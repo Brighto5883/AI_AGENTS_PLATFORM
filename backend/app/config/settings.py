@@ -1,7 +1,10 @@
+from decimal import Decimal
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    APP_ENV: str = "development"
     # Infrastructure
     ENABLE_CACHE: bool = False
     REDIS_HOST: str = "localhost"
@@ -14,7 +17,7 @@ class Settings(BaseSettings):
     GROQ_API_KEY: str
 
     # Database
-    DATABASE_URL: str = 'postgresql+asyncpg://roadagent:devpassword@localhost:5432/roadagent_db'
+    DATABASE_URL: str
 
     # RAG
     PAGEINDEX_API_KEY: str
@@ -37,12 +40,28 @@ class Settings(BaseSettings):
     WHATSAPP_PHONE_NUMBER_ID: str
     WHATSAPP_ACCESS_TOKEN: str
     WHATSAPP_WEBHOOK_VERIFY_TOKEN: str
+    WHATSAPP_APP_SECRET: str | None = None
 
     #UPLOAD_SIZES
     MAX_UPLOAD_SIZE_BYTES: int = 20 * 1024 * 1024
 
         # Marketplace media
     MAX_MARKETPLACE_IMAGE_SIZE_BYTES: int = 10 * 1024 * 1024
+
+    # Marketplace billing
+    # Keep disabled during the free-launch period. Enabling this is the main
+    # switch that turns the configured billing modes on for users.
+    marketplace_billing_enabled: bool = False
+    marketplace_default_billing_mode: str = "connection_fee"
+    marketplace_currency: str = "KES"
+    marketplace_subscription_monthly_fee: Decimal = Decimal("549.00")
+    marketplace_connection_fee: Decimal = Decimal("25.00")
+    marketplace_listing_fee_per_item: Decimal = Decimal("25.00")
+    marketplace_billing_notice_title: str = "Marketplace is currently free"
+    marketplace_billing_notice_message: str = (
+        "The marketplace is currently free while we prepare paid plans. "
+        "We will notify you before charges are introduced."
+    )
 
     # Marketplace moderation
     GEMINI_SCANNER_MODEL: str = "gemini-2.5-flash-lite"
@@ -53,7 +72,11 @@ class Settings(BaseSettings):
     MPESA_SHORTCODE: str
     MPESA_PASSKEY: str
     MPESA_CALLBACK_URL: str
+    MPESA_CALLBACK_TOKEN: str | None = None
     MPESA_BASE_URL: str
+
+    # Browser clients. Native mobile clients do not use CORS.
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173,http://localhost:8081"
 
     # R2 IMAGE UPLOAD
     r2_endpoint_url: str

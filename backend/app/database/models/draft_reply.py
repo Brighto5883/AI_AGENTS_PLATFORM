@@ -9,7 +9,7 @@ from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.api.schemas.enums import DraftStatus
+from app.core.enums import DraftStatus
 from app.database.base import Base
 
 if TYPE_CHECKING:
@@ -25,6 +25,15 @@ class DraftReply(Base):
 
     conversation_id: Mapped[str] = mapped_column(
         ForeignKey("whatsapp_conversations.id"), index=True
+    )
+
+    # Owner of this platform service. Nullable for legacy/external WhatsApp
+    # conversations that are not associated with a registered platform user.
+    user_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
     )
     trigger_message_id: Mapped[str] = mapped_column(
         ForeignKey("whatsapp_messages.id"), index=True

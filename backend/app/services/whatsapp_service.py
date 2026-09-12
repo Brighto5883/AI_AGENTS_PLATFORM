@@ -1,6 +1,8 @@
 from sqlalchemy import select
 
-from app.api.schemas.enums import AgentType
+from app.database.models.user import User
+
+from app.core.enums import AgentType
 from app.database.models.draft_reply import DraftReply
 from app.database.models.whatsapp_conversation import (
     MessageDirection,
@@ -79,6 +81,7 @@ class WhatsAppService:
             conversation_id=conversation.id,
             trigger_message_id=inbound.id,
             draft_content=agent_response.answer,
+            user_id=conversation.user_id,
             session=session,
         )
 
@@ -153,13 +156,25 @@ class WhatsAppService:
         )
         conversation = result.scalar_one_or_none()
 
+        user_result = await session.execute(
+            select(User.id).where(User.phone == customer_phone)
+        )
+        user_id = user_result.scalar_one_or_none()
+
         if conversation is None:
             conversation = WhatsAppConversation(
                 customer_phone=customer_phone,
                 customer_name=customer_name,
+                user_id=user_id,
             )
             session.add(conversation)
             await session.flush()
+        elif conversation.user_id is None and user_id is not None:
+            conversation.user_id = user_id
+            await session.flush()
+
+        if customer_name and conversation.customer_name != customer_name:
+            conversation.customer_name = customer_name
 
         return conversation
 

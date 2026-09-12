@@ -281,6 +281,7 @@ export default function ListingDetails() {
               contactName={listing.seller.name}
               contextLabel={listing.title}
               isOwnPost={user?.id === listing.seller_id}
+              contactUnlocked={listing.contact_unlocked}
             />
 
 

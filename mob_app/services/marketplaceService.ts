@@ -458,3 +458,19 @@ export async function deleteWantedPost(
     );
   }
 }
+
+//====================================================================================
+// MARKETPLACE BILLING
+//====================================================================================
+
+export async function getMarketplaceBillingInfo(): Promise<import("@/types/billing").MarketplaceBillingInfo> {
+  const response = await apiFetch("/marketplace/billing/info", {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch marketplace billing information: ${response.status}`);
+  }
+
+  return response.json();
+}

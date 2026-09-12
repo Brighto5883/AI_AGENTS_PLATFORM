@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy import Enum as SAEnum
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base
@@ -26,6 +27,12 @@ class WhatsAppConversation(Base):
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     customer_phone: Mapped[str] = mapped_column(String, index=True)
     customer_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     messages: Mapped[list["WhatsAppMessage"]] = relationship(

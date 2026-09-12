@@ -24,32 +24,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAuthenticated = token !== null;
 
   const loadUser = async () => {
-    try {
-      const profile = await getCurrentUser();
-      setUser(profile);
-    } catch (error) {
-      console.error("Failed to load user profile:", error);
-      setUser(null);
-    }
+    const profile = await getCurrentUser();
+    setUser(profile);
   };
-
-  useEffect(() => {
-    const loadToken = async () => {
-      try {
-        const storedToken = await getToken();
-        setToken(storedToken);
-        if (storedToken) {
-          await loadUser();
-        }
-      } catch (error) {
-        console.error("Failed to load token:", error);
-        setToken(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadToken();
-  }, []);
 
   useEffect(() => {
     const unsubscribe = addUnauthorizedListener(() => {
@@ -57,6 +34,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       Alert.alert("Session expired", "Your session has expired. Please log in again.");
     });
+
+    const loadToken = async () => {
+      try {
+        const storedToken = await getToken();
+
+        if (!storedToken) {
+          setToken(null);
+          return;
+        }
+
+        setToken(storedToken);
+
+        try {
+          await loadUser();
+        } catch (error) {
+          console.error("Failed to load user profile:", error);
+          await removeToken();
+          setToken(null);
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("Failed to load token:", error);
+        setToken(null);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadToken();
+
     return unsubscribe;
   }, []);
 

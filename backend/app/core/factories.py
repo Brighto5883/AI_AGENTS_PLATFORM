@@ -9,6 +9,7 @@ from app.integrations.whatsapp.client import WhatsAppClient
 from app.integrations.whatsapp.transcription import TranscriptionClient
 from app.marketplace.media.image_processing import ImageProcessor
 from app.marketplace.media.image_storage import ImageStorage
+from app.marketplace.moderation.image_scanner import ImageContactScanner
 from app.marketplace.media.local_image_storage import LocalImageStorage
 from app.marketplace.media.r2_image_storage import R2ImageStorage
 from app.marketplace.services.listing_image_service import ListingImageService
@@ -92,18 +93,16 @@ def create_memory_service():
     return MemoryService()
 
 
-def create_wanted_post_service():
-    return WantedPostService()
+def create_wanted_post_service(billing_service):
+    return WantedPostService(billing_service=billing_service)
 
 
 def create_pricing_service():
     return MarketplacePricingService()
 
 
-def create_transaction_service(pricing_service):
-    return TransactionService(
-        pricing_service=pricing_service,
-)
+def create_transaction_service(billing_service):
+    return TransactionService(billing_service=billing_service)
 
 
 def create_billing_service(pricing_service):
@@ -135,7 +134,7 @@ def create_image_storage() -> ImageStorage:
 
 def create_image_processor():
     return ImageProcessor(
-        max_upload_size_bytes=settings.MAX_UPLOAD_SIZE_BYTES,
+        max_upload_size_bytes=settings.MAX_MARKETPLACE_IMAGE_SIZE_BYTES,
         max_width=settings.image_max_width,
         max_height=settings.image_max_height,
     )
@@ -151,6 +150,7 @@ def create_listing_image_service(
         image_processor=image_processor,
         max_images=max_images,
         url_expiration_seconds=url_expiration_seconds,
+        image_scanner=ImageContactScanner(),
     )
 
 

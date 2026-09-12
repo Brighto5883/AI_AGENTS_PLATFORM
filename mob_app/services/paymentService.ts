@@ -5,8 +5,8 @@ import type {
   DonationResponse,
   PaymentStatusResponse,
   PaymentVerificationResult,
+  VerifyTransactionInput,
 } from "@/types/payment";
-
 export async function createDonation(
   input: CreateDonationInput,
 ): Promise<DonationResponse> {

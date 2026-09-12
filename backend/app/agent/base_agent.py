@@ -3,8 +3,8 @@ from app.agent.context import agent_context
 from app.agent.graph import create_agent_graph
 from app.agent.state import AgentState
 from app.agent.tool_binding import bind_context_arg
-from app.api.schemas.agent import AgentResponse
-from app.api.schemas.enums import AgentType
+from app.agent.schemas import AgentResponse
+from app.core.enums import AgentType
 from app.knowledge.context import KnowledgeContext
 from app.llm.gateway import build_llm
 

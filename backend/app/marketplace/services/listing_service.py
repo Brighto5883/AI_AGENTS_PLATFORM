@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -10,8 +10,11 @@ from app.billing.billing_service import BillingService
 from app.billing.enums import MarketplaceBillingMode
 from app.database.models.listing import Listing
 from app.database.models.user import User
+from app.database.models.transaction import Transaction
+from app.marketplace.enums import TransactionStatus
 from app.marketplace.media.schemas import ImageUpload
 from app.marketplace.moderation.text_scanner import scan_text
+from app.marketplace.schemas.contact import ContactablePublic
 from app.marketplace.schemas.listings import (
     ListingCreate,
     ListingCreationResult,
@@ -33,6 +36,40 @@ class ListingService:
         self.listing_image_service = listing_image_service
 
 # ==================================================================================
+
+    async def _validate_subscription_quota(
+        self,
+        *,
+        seller_id: UUID,
+        listing_limit: int | None,
+        session: AsyncSession,
+    ) -> None:
+        if listing_limit is None:
+            raise HTTPException(
+                status_code=500,
+                detail="Subscription listing limit is not configured.",
+            )
+
+        result = await session.execute(
+            select(func.count(Listing.id)).where(
+                Listing.seller_id == seller_id,
+                Listing.is_approved.is_(True),
+                Listing.is_active.is_(True),
+            )
+        )
+
+        listing_count = result.scalar_one()
+
+        if listing_count >= listing_limit:
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "You have reached your current marketplace listing "
+                    "limit. Upgrade your plan or mark an active listing "
+                    "as sold before creating another one."
+                ),
+            )
+
     async def create_listing(
         self,
         seller: User,
@@ -49,31 +86,30 @@ class ListingService:
             )
         )
 
-        if seller.billing_mode == MarketplaceBillingMode.SUBSCRIPTION:
-            await self.billing_service.validate_subscription_quota(
-                user=seller,
+        if seller.billing_mode == MarketplaceBillingMode.SUBSCRIPTION and self.billing_service.billing_enabled:
+            await self._validate_subscription_quota(
+                seller_id=seller.id,
+                listing_limit=billing_decision.subscription_listing_limit,
                 session=session,
             )
 
+        # Contact-information protection is a marketplace invariant.
+        moderation_result = scan_text(
+            f"{data.title} {data.description}"
+        )
 
-        if billing_decision.requires_contact_scanning:
-
-            moderation_result = scan_text(
-                f"{data.title} {data.description}"
+        if not moderation_result["passed"]:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "message": (
+                        "Listing contains prohibited contact "
+                        "information."
+                    ),
+                    "reason": moderation_result["reason"],
+                    "flagged": moderation_result["flagged"],
+                },
             )
-
-            if not moderation_result["passed"]:
-                raise HTTPException(
-                    status_code=400,
-                    detail={
-                        "message": (
-                            "Listing contains prohibited contact "
-                            "information."
-                        ),
-                        "reason": moderation_result["reason"],
-                        "flagged": moderation_result["flagged"],
-                    },
-                )
 
         listing = Listing(
             seller_id=seller.id,
@@ -95,6 +131,7 @@ class ListingService:
                 listing_id=listing.id,
                 uploads=images,
                 session=session,
+                scan_for_contact=billing_decision.requires_contact_scanning,
             )
         )
 
@@ -138,6 +175,7 @@ class ListingService:
         self,
         listing_id: UUID,
         session: AsyncSession,
+        viewer_id: UUID | None = None,
     ) -> Listing:
 
         result = await session.execute(
@@ -155,6 +193,16 @@ class ListingService:
                 detail="Listing not found.",
             )
 
+        if (
+            viewer_id is not None
+            and listing.seller_id != viewer_id
+            and (not listing.is_approved or not listing.is_active)
+        ):
+            raise HTTPException(
+                status_code=404,
+                detail="Listing not found.",
+            )
+
         return listing
 
 # ==================================================================================
@@ -162,6 +210,8 @@ class ListingService:
         self,
         *,
         listing: Listing,
+        viewer_id: UUID | None = None,
+        session: AsyncSession | None = None,
     ) -> ListingResponse:
 
         images = []
@@ -182,6 +232,18 @@ class ListingService:
                 )
             )
 
+        contact_unlocked = await self._is_contact_unlocked(
+            listing=listing,
+            viewer_id=viewer_id,
+            session=session,
+        )
+        seller = listing.seller
+        seller_contact = seller if contact_unlocked else ContactablePublic(
+            id=seller.id,
+            name=seller.name,
+            phone=None,
+        )
+
         return ListingResponse(
             id=listing.id,
             seller_id=listing.seller_id,
@@ -191,13 +253,45 @@ class ListingService:
             category=listing.category,
             image_path=listing.image_path,
             is_approved=listing.is_approved,
-            is_active = listing.is_active,
+            is_active=listing.is_active,
             needs_review=listing.needs_review,
             review_reason=listing.review_reason,
             created_at=listing.created_at,
             images=images,
-            seller=listing.seller,
+            seller=seller_contact,
+            contact_unlocked=contact_unlocked,
         )
+
+    async def _is_contact_unlocked(
+        self,
+        *,
+        listing: Listing,
+        viewer_id: UUID | None,
+        session: AsyncSession | None,
+    ) -> bool:
+        if viewer_id == listing.seller_id:
+            return True
+        if not self.billing_service.billing_enabled:
+            return True
+        if listing.seller.billing_mode in {
+            MarketplaceBillingMode.SUBSCRIPTION,
+            MarketplaceBillingMode.LISTING_FEE,
+        }:
+            # Subscription users expose contact by plan. For pay-per-listing,
+            # payment of the listing is what makes the listing publicly
+            # contactable, represented by its approved state.
+            return listing.is_approved
+        if viewer_id is None or session is None:
+            return False
+
+        result = await session.execute(
+            select(Transaction.id).where(
+                Transaction.listing_id == listing.id,
+                Transaction.initiator_id == viewer_id,
+                Transaction.status == TransactionStatus.PAID,
+            ).limit(1)
+        )
+        return result.scalar_one_or_none() is not None
 
 # ==================================================================================
     async def list_my_listings(
@@ -295,25 +389,25 @@ class ListingService:
 
         update_data = data.model_dump(exclude_unset=True)
 
-        if "title" in update_data or "description" in update_data:
-            title = update_data.get("title", listing.title)
-            description = update_data.get(
-                "description",
-                listing.description,
+        if not listing.is_approved and "price" in update_data:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "The price cannot be changed while this listing is "
+                    "awaiting payment/approval."
+                ),
             )
 
-            moderation_result = scan_text(
-                f"{title} {description}"
-            )
+        if "title" in update_data or "description" in update_data:
+            title = update_data.get("title", listing.title)
+            description = update_data.get("description", listing.description)
+            moderation_result = scan_text(f"{title} {description}")
 
             if not moderation_result["passed"]:
                 raise HTTPException(
                     status_code=400,
                     detail={
-                        "message": (
-                            "Listing contains prohibited contact "
-                            "information."
-                        ),
+                        "message": "Listing contains prohibited contact information.",
                         "reason": moderation_result["reason"],
                         "flagged": moderation_result["flagged"],
                     },
@@ -354,10 +448,17 @@ class ListingService:
                 detail="You do not own this listing.",
             )
 
+        seller = await session.get(User, seller_id)
+        if seller is None:
+            raise HTTPException(status_code=404, detail="User not found.")
+
         await self.listing_image_service.add_images(
             listing_id=listing.id,
             uploads=images,
             session=session,
+            scan_for_contact=self.billing_service.get_capabilities(
+                seller
+            ).requires_contact_scanning,
         )
 
         await session.commit()

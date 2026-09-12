@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.database.models.listing import Listing
 from app.marketplace.schemas.contact import ContactablePublic
@@ -14,6 +14,15 @@ class ListingCreate(BaseModel):
     description: str = Field(min_length=1)
     price: Decimal = Field(gt=0)
     category: str = Field(min_length=1, max_length=100)
+
+
+    @field_validator("title", "description", "category")
+    @classmethod
+    def validate_text_fields(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("This field cannot be empty.")
+        return value
 
 class ListingUpdate(BaseModel):
     title: str | None = Field(
@@ -34,6 +43,17 @@ class ListingUpdate(BaseModel):
         min_length=1,
         max_length=100,
     )
+
+
+    @field_validator("title", "description", "category")
+    @classmethod
+    def validate_update_text_fields(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if not value:
+            raise ValueError("This field cannot be empty.")
+        return value
 
 class ListingImageResponse(BaseModel):
     id: UUID
@@ -61,6 +81,7 @@ class ListingResponse(BaseModel):
     created_at: datetime
     images: list[ListingImageResponse]
     seller: ContactablePublic
+    contact_unlocked: bool
 
 
 @dataclass(frozen=True)

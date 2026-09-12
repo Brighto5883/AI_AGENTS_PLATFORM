@@ -28,7 +28,9 @@ async def create_feedback(
 ) -> FeedbackResponse:
     feedback = await container.feedback_service.create_feedback(
         user_id=authenticated_user.id,
-        data=data,
+        category=data.category,
+        message=data.message,
+        screen=data.screen,
         session=session,
     )
 

@@ -6,6 +6,7 @@ interface Props {
   contactName?: string | null;
   contextLabel: string; // listing/wanted-post title, used in the pre-filled message
   isOwnPost: boolean;
+  contactUnlocked?: boolean;
 }
 
 export default function ContactActions({
@@ -13,9 +14,20 @@ export default function ContactActions({
   contactName,
   contextLabel,
   isOwnPost,
+  contactUnlocked = true,
 }: Props) {
   if (isOwnPost) {
     return null; // no point contacting yourself
+  }
+
+  if (!contactUnlocked) {
+    return (
+      <View className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+        <Text className="text-center text-sm font-semibold text-amber-900">
+          Contact is locked until the connection payment is completed.
+        </Text>
+      </View>
+    );
   }
 
   if (!phone) {

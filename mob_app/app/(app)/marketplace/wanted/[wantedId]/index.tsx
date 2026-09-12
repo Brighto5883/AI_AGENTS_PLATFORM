@@ -68,6 +68,7 @@ export default function WantedDetail() {
         contactName={post.requester.name}
         contextLabel={post.title}
         isOwnPost={user?.id === post.requester.id}
+        contactUnlocked={post.contact_unlocked}
       />
 
       <View className="mt-5 rounded-2xl border border-gray-200 bg-white p-4">

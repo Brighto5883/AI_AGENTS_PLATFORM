@@ -5,7 +5,9 @@ import { router } from "expo-router";
 import FeedbackButton from "@/components/feedback/feedbackButton";
 import FeedbackModal from "@/components/feedback/FeedbackModal";
 import ListingCard from "@/components/marketplace/ListingCard";
-import { getListings } from "@/services/marketplaceService";
+import { getListings, getMarketplaceBillingInfo } from "@/services/marketplaceService";
+import MarketplaceBillingNotice from "@/components/marketplace/MarketplaceBillingNotice";
+import type { MarketplaceBillingInfo } from "@/types/billing";
 import {
   ActivityIndicator,
   FlatList,
@@ -148,6 +150,11 @@ export default function Marketplace() {
   const [hasMore, setHasMore] = useState(false);
 
   const [feedbackVisible, setFeedbackVisible] = useState(false);
+  const [billingInfo, setBillingInfo] = useState<MarketplaceBillingInfo | null>(null);
+
+  useEffect(() => {
+    void getMarketplaceBillingInfo().then(setBillingInfo).catch(() => undefined);
+  }, []);
 
   //===========================================================================
   // Responsive layout
@@ -457,6 +464,12 @@ export default function Marketplace() {
             <Text className="mt-3 max-w-2xl text-base leading-6 text-gray-500">
               Find what you need or sell something to the KU community.
             </Text>
+
+            {billingInfo ? (
+              <View className="mt-5">
+                <MarketplaceBillingNotice billing={billingInfo} />
+              </View>
+            ) : null}
 
         {/* ================================================================
             Search

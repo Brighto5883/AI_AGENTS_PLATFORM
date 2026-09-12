@@ -37,10 +37,10 @@ export type Listing = {
   category: MarketplaceCategory;
   image_path: string | null;
   is_approved: boolean;
-  is_active: boolean;
   needs_review: boolean;
   review_reason: string | null;
   created_at: string;
+  contact_unlocked: boolean;
   images: ListingImage[];
   seller: Contactable;
 };
@@ -76,6 +76,7 @@ export type ListingSort =
     budget: string | null;
     is_open: boolean;
     created_at: string;
+    contact_unlocked: boolean;
     requester: Contactable;
   }
   

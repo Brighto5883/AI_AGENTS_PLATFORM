@@ -5,7 +5,7 @@ from sqlalchemy import DateTime, Enum, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.api.schemas.enums import FeedbackCategory
+from app.core.enums import FeedbackCategory
 from app.database.base import Base
 
 

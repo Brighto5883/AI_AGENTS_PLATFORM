@@ -1,6 +1,10 @@
+import logging
+
 import httpx
 
 from app.config.settings import settings
+
+logger = logging.getLogger(__name__)
 
 GRAPH_API_VERSION = "v21.0"
 
@@ -57,11 +61,14 @@ class WhatsAppClient:
         response = await client.get(media_url)
         response.raise_for_status()
 
-        print(
-                f"[media download] status={response.status_code}"
-                f"bytes={len(response.content)}"
-                f"content-type={response.headers.get('content-type')}"
-            )
+        logger.debug(
+            "WhatsApp media downloaded",
+            extra={
+                "status_code": response.status_code,
+                "byte_count": len(response.content),
+                "content_type": response.headers.get("content-type"),
+            },
+        )
 
         return response.content
 

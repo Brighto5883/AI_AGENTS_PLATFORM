@@ -1,7 +1,7 @@
 from app.agents.email_agent import EmailAssistant
 from app.agents.road_design_agent import RoadDesignAgent
 from app.agents.whatsapp_agent import WhatsAppAssistant
-from app.api.schemas.enums import AgentType
+from app.core.enums import AgentType
 from app.knowledge.context import KnowledgeContext
 
 

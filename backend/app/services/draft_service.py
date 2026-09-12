@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import HTTPException
 from sqlalchemy import select
 
-from app.api.schemas.enums import DraftStatus
+from app.core.enums import DraftStatus
 from app.database.models.draft_reply import DraftReply
 
 
@@ -18,11 +18,13 @@ class DraftService:
         conversation_id: str,
         trigger_message_id: str,
         draft_content: str,
+        user_id: UUID | None,
         session,
     ) -> DraftReply:
         draft = DraftReply(
             conversation_id=conversation_id,
             trigger_message_id=trigger_message_id,
+            user_id=user_id,
             draft_content=draft_content,
         )
         
@@ -30,27 +32,48 @@ class DraftService:
         await session.flush()
         return draft
 
-    async def list_drafts(self, session, status: DraftStatus | None = None):
-        query = select(DraftReply).order_by(DraftReply.created_at.desc())
+    async def list_drafts(
+        self,
+        *,
+        user_id: UUID,
+        session,
+        status: DraftStatus | None = None,
+    ):
+        query = (
+            select(DraftReply)
+            .where(DraftReply.user_id == user_id)
+            .order_by(DraftReply.created_at.desc())
+        )
         if status:
             query = query.where(DraftReply.status == status)
         result = await session.execute(query)
         return result.scalars().all()
 
-    async def get_draft(self, draft_id: str, session) -> DraftReply:
-        draft = await session.get(DraftReply, draft_id)
+    async def get_draft(
+        self,
+        draft_id: str,
+        user_id: UUID,
+        session,
+    ) -> DraftReply:
+        result = await session.execute(
+            select(DraftReply).where(
+                DraftReply.id == draft_id,
+                DraftReply.user_id == user_id,
+            )
+        )
+        draft = result.scalar_one_or_none()
         if draft is None:
             raise HTTPException(status_code=404, detail="Draft not found")
         return draft
 
     async def approve(
         self, 
-        draft_id: str, 
-        reviewer_id: UUID, 
-        session, 
+        draft_id: str,
+        reviewer_id: UUID,
+        session,
         edited_content: str | None = None
     ) -> DraftReply:
-        draft = await self.get_draft(draft_id, session)
+        draft = await self.get_draft(draft_id, reviewer_id, session)
         self._ensure_pending(draft)
 
         if edited_content:
@@ -73,7 +96,7 @@ class DraftService:
         session, 
         reason: str | None = None
     ) -> DraftReply:
-        draft = await self.get_draft(draft_id, session)
+        draft = await self.get_draft(draft_id, reviewer_id, session)
         self._ensure_pending(draft)
 
         draft.status = DraftStatus.REJECTED
@@ -85,8 +108,13 @@ class DraftService:
         await session.refresh(draft)
         return draft
 
-    async def send(self, draft_id: str, session) -> DraftReply:
-        draft = await self.get_draft(draft_id, session)
+    async def send(
+        self,
+        draft_id: str,
+        user_id: UUID,
+        session,
+    ) -> DraftReply:
+        draft = await self.get_draft(draft_id, user_id, session)
 
         if draft.status not in (DraftStatus.APPROVED, DraftStatus.EDITED):
             raise HTTPException(

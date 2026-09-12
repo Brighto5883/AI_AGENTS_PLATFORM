@@ -68,6 +68,8 @@ async def create_listing(
 
     return await container.listing_service.to_listing_response(
         listing=result.listing,
+        viewer_id=authenticated_user.id,
+        session=session,
     )
 # ==================================================================================
 @router.get("/")
@@ -123,7 +125,9 @@ async def list_listings(
     )
 
     return {
-        "items": [await container.listing_service.to_listing_response(listing=listing) for listing in listings],
+        "items": [await container.listing_service.to_listing_response(
+                listing=listing, viewer_id=authenticated_user.id, session=session
+            ) for listing in listings],
         "next_offset": offset + len(listings),
         'has_more': len(listings) == limit,
     }
@@ -165,6 +169,8 @@ async def mark_listing_sold(
 
     return await container.listing_service.to_listing_response(
         listing=listing,
+        viewer_id=authenticated_user.id,
+        session=session,
     )
 # ===================================================================================
 @router.patch(
@@ -186,6 +192,8 @@ async def update_listing(
 
     return await container.listing_service.to_listing_response(
         listing=listing,
+        viewer_id=authenticated_user.id,
+        session=session,
     )
 
 # ==================================================================================
@@ -251,6 +259,8 @@ async def add_listing_images(
 
     return await container.listing_service.to_listing_response(
         listing=listing,
+        viewer_id=authenticated_user.id,
+        session=session,
     )
 
 
@@ -267,9 +277,12 @@ async def get_listing(
     listing = await container.listing_service.get_listing(
         listing_id=listing_id,
         session=session,
+        viewer_id=authenticated_user.id,
     )
     return await container.listing_service.to_listing_response(
-        listing =listing
+        listing=listing,
+        viewer_id=authenticated_user.id,
+        session=session,
     )
 # ==================================================================================
 @router.delete(

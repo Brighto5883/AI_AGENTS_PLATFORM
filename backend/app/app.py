@@ -20,13 +20,14 @@ from app.api.routes import (
 )
 from app.api.routes.auth import register_auth_routes
 from app.cache import configure_cache
+from app.api.middleware import RequestContextMiddleware
 from app.config.settings import settings
 from app.core.container import container
 from app.llm.gateway import (
     register_llm_callbacks,
     unregister_llm_callbacks,
 )
-from app.marketplace.routes import listings, transactions, wanted_posts
+from app.marketplace.routes import billing, listings, transactions, wanted_posts
 
 
 @asynccontextmanager
@@ -42,6 +43,7 @@ async def lifespan(app: FastAPI):
     yield
 
     unregister_llm_callbacks()
+    await container.whatsapp_client.close()
     await GLOBAL_LOGGING_WORKER.stop()
 
 
@@ -66,9 +68,15 @@ def create_application() -> FastAPI:
         name="media",
     )
 
+    api.add_middleware(RequestContextMiddleware)
+
     api.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=[
+            origin.strip()
+            for origin in settings.CORS_ORIGINS.split(",")
+            if origin.strip()
+        ],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -86,6 +94,7 @@ def create_application() -> FastAPI:
     api.include_router(listings.router)
     api.include_router(wanted_posts.router)
     api.include_router(transactions.router)
+    api.include_router(billing.router)
     api.include_router(mpesa_webhook.router)
     api.include_router(donations.router)
     api.include_router(payments.router)

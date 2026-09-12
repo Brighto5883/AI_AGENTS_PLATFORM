@@ -2,7 +2,7 @@ import logging
 
 from fastapi import HTTPException, UploadFile
 
-from app.api.schemas.enums import AgentType, RetrievalMethod
+from app.core.enums import AgentType, RetrievalMethod
 from app.database.models.query_history import QueryHistory
 from app.knowledge.context import KnowledgeContext
 from app.knowledge.scoped_knowledge import ScopedKnowledgeService
@@ -58,11 +58,14 @@ class ChatService:
                 )
 
 
-            answer, documents, cost = await self.agent_service.ask(
+            agent_response = await self.agent_service.ask(
                 agent=AgentType.ROAD,
                 query=query,
                 knowledge=knowledge,
             )
+            answer = agent_response.answer
+            documents = agent_response.documents
+            cost = agent_response.cost
 
         except HTTPException:
             raise
@@ -87,7 +90,7 @@ class ChatService:
             query=query,
             method=method,
             answer=answer,
-            document=documents, 
+            document=", ".join(documents),
             cost=cost,
         )
 
@@ -105,7 +108,7 @@ class ChatService:
 
             raise HTTPException(
                 status_code=500,
-                detail=f"Error saving query record: {e}",
+                detail="Error saving query record.",
             ) from e 
 
         return query_record

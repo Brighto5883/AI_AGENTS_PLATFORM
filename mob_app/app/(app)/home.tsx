@@ -1,6 +1,6 @@
 
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DonationModal from "@/components/payments/DonationModal";
 import { Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
 
@@ -8,6 +8,9 @@ import FeedbackButton from "@/components/feedback/feedbackButton";
 import FeedbackModal from "@/components/feedback/FeedbackModal";
 import ServiceCard from "@/components/ServiceCard";
 import { services } from "@/config/services";
+import { getMarketplaceBillingInfo } from "@/services/marketplaceService";
+import type { MarketplaceBillingInfo } from "@/types/billing";
+import MarketplaceBillingNotice from "@/components/marketplace/MarketplaceBillingNotice";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Home() {
@@ -15,6 +18,7 @@ export default function Home() {
   const { width } = useWindowDimensions();
   const [donationVisible, setDonationVisible] = useState(false);
   const [feedbackVisible, setFeedbackVisible] = useState(false);
+  const [billingInfo, setBillingInfo] = useState<MarketplaceBillingInfo | null>(null);
 
   // Responsive service grid:
   // Mobile  -> 2 columns
@@ -33,6 +37,10 @@ export default function Home() {
   const cardGap = width >= 800 ? 16 : 12;
 
   const contentWidth = width - horizontalPadding * 2;
+
+  useEffect(() => {
+    void getMarketplaceBillingInfo().then(setBillingInfo).catch(() => undefined);
+  }, []);
 
   const cardWidth =
     (contentWidth - cardGap * (serviceColumns - 1)) /
@@ -77,6 +85,12 @@ export default function Home() {
               AI-powered tools and services for getting things done.
             </Text>
           </View>
+
+          {billingInfo ? (
+            <View className="mb-6">
+              <MarketplaceBillingNotice billing={billingInfo} />
+            </View>
+          ) : null}
 
           {/* Services */}
           <View

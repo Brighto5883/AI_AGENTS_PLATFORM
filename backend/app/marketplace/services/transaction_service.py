@@ -1,22 +1,22 @@
+from decimal import Decimal
 from uuid import UUID
 
 from fastapi import HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models.listing import Listing
 from app.database.models.transaction import Transaction
+from app.database.models.user import User
 from app.database.models.wanted_post import WantedPost
+from app.billing.billing_service import BillingService
 from app.marketplace.enums import PaymentRequiredFrom, TransactionStatus
-from app.pricing.marketplace_pricing_service import MarketplacePricingService
 
 
 class TransactionService:
 
-    def __init__(
-        self,
-        pricing_service: MarketplacePricingService,
-    ):
-        self.pricing_service = pricing_service
+    def __init__(self, billing_service: BillingService) -> None:
+        self.billing_service = billing_service
 
 
     async def create_listing_connection(
@@ -41,23 +41,35 @@ class TransactionService:
         buyer_id = initiator_id
         seller_id = listing.seller_id
 
+        user = await session.get(User, initiator_id)
+        if user is None:
+            raise HTTPException(status_code=404, detail="User not found.")
+        capabilities = self.billing_service.get_capabilities(user)
+        fee_amount = (
+            self.billing_service.get_connection_fee()
+            if capabilities.requires_connection_payment
+            else Decimal("0.00")
+        )
+
         transaction = Transaction(
             listing_id=listing.id,
             buyer_id=buyer_id,
             seller_id=seller_id,
             initiator_id=initiator_id,
-            fee_amount = self.pricing_service.get_service_fee(
-                category=listing.category,
-                amount=listing.price,
-            ),
+            fee_amount=fee_amount or Decimal("0.00"),
             payment_required_from=PaymentRequiredFrom.BUYER,
-            payer_id=None,
-            status=TransactionStatus.PENDING_PAYMENT,
+            payer_id=initiator_id if not capabilities.requires_connection_payment else None,
+            status=(
+                TransactionStatus.PENDING_PAYMENT
+                if capabilities.requires_connection_payment
+                else TransactionStatus.PAID
+            ),
         )
 
         session.add(transaction)
 
-        await session.flush()
+        await session.commit()
+        await session.refresh(transaction)
 
         return transaction
 
@@ -80,23 +92,35 @@ class TransactionService:
                 detail="This wanted post is no longer open.",
             )
 
+        user = await session.get(User, initiator_id)
+        if user is None:
+            raise HTTPException(status_code=404, detail="User not found.")
+        capabilities = self.billing_service.get_capabilities(user)
+        fee_amount = (
+            self.billing_service.get_connection_fee()
+            if capabilities.requires_connection_payment
+            else Decimal("0.00")
+        )
+
         transaction = Transaction(
             wanted_id=wanted_post.id,
             buyer_id=wanted_post.requester_id,
             seller_id=initiator_id,
             initiator_id=initiator_id,
-            fee_amount=self.pricing_service.get_service_fee(
-                category=wanted_post.category,
-                amount=wanted_post.budget,
-            ),
+            fee_amount=fee_amount or Decimal("0.00"),
             payment_required_from=PaymentRequiredFrom.SELLER,
-            payer_id=None,
-            status=TransactionStatus.PENDING_PAYMENT,
+            payer_id=initiator_id if not capabilities.requires_connection_payment else None,
+            status=(
+                TransactionStatus.PENDING_PAYMENT
+                if capabilities.requires_connection_payment
+                else TransactionStatus.PAID
+            ),
         )
 
         session.add(transaction)
 
-        await session.flush()
+        await session.commit()
+        await session.refresh(transaction)
 
         return transaction
 
@@ -153,9 +177,33 @@ class TransactionService:
                 ),
             )
 
+        if user_id not in {transaction.buyer_id, transaction.seller_id}:
+            raise HTTPException(
+                status_code=403,
+                detail="You are not a participant in this transaction.",
+            )
+
         transaction.status = TransactionStatus.CANCELLED
 
         await session.commit()
         await session.refresh(transaction)
 
+        return transaction
+
+    async def get_transaction_for_participant(
+        self,
+        *,
+        transaction_id: UUID,
+        user_id: UUID,
+        session: AsyncSession,
+    ) -> Transaction:
+        result = await session.execute(
+            select(Transaction).where(
+                Transaction.id == transaction_id,
+                (Transaction.buyer_id == user_id) | (Transaction.seller_id == user_id),
+            )
+        )
+        transaction = result.scalar_one_or_none()
+        if transaction is None:
+            raise HTTPException(status_code=404, detail="Transaction not found.")
         return transaction

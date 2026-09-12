@@ -1,11 +1,14 @@
 # app/api/dependencies/rate_limit.py
 import asyncio
+import logging
 import time
 
 from fastapi import Depends, HTTPException
 
 from app.cache import get_redis_client
 from app.database.users import current_active_user
+
+logger = logging.getLogger(__name__)
 
 REQUESTS_PER_MINUTE = 20  # tune per plan tier later
 
@@ -32,7 +35,7 @@ async def enforce_rate_limit(user=Depends(current_active_user)):  # noqa: B008
     except Exception as e:
         # Redis itself failed (timeout, connection refused, etc.) — fail open,
         # never let infrastructure trouble block real traffic.
-        print(f"[rate limit] Redis error, allowing request through: {e}")
+        logger.warning("Redis error in rate limiter; allowing request through", exc_info=True)
         return
 
 
@@ -66,9 +69,7 @@ async def wait_for_rate_limit_slot(
         except Exception as e:
             # Redis itself failed — fail open, don't block message processing
             # over an infrastructure hiccup.
-            print(
-                f"[rate limit] Redis error during wait, allowing message through: {e}"
-            )
+            logger.warning("Redis error during rate-limit wait; allowing message through", exc_info=True)
             return
 
         await asyncio.sleep(check_interval)

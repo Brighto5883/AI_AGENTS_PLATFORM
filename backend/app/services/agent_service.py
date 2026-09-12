@@ -1,4 +1,4 @@
-from app.api.schemas.enums import AgentType
+from app.core.enums import AgentType
 from app.knowledge.context import KnowledgeContext
 from app.routing.agent_router import AgentRouter
 

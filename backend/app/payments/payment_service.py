@@ -1,4 +1,4 @@
-
+import logging
 from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
@@ -17,6 +17,8 @@ from app.payments.payment_schemas import (
     PaymentVerificationResult,
 )
 from app.payments.payment_success_action import PaymentSuccessAction
+
+logger = logging.getLogger(__name__)
 
 
 class PaymentService:
@@ -150,9 +152,9 @@ class PaymentService:
         callback: MpesaStkCallback,
         session: AsyncSession,
     ) -> Payment:
-        print(
-            "M-Pesa callback:",
-            callback.model_dump(),
+        logger.info(
+            "M-Pesa callback received",
+            extra={"checkout_request_id": callback.checkout_request_id},
         )
 
         result = await session.execute(
@@ -165,10 +167,12 @@ class PaymentService:
         payment = result.scalar_one_or_none()
 
         if payment is not None:
-            print(
-                f"M-Pesa callback received: "
-                f"payment_id={payment.id}, "
-                f"result_code={callback.result_code}"
+            logger.info(
+                "M-Pesa callback matched payment",
+                extra={
+                    "payment_id": str(payment.id),
+                    "result_code": callback.result_code,
+                },
             )
 
         if payment is None:
@@ -184,7 +188,20 @@ class PaymentService:
         if callback.result_code == 0:
             payment.status = PaymentStatus.SUCCESSFUL
 
-            print(f"Payment {payment.id} → SUCCESSFUL") 
+            logger.info("Payment marked successful", extra={"payment_id": str(payment.id)})
+
+            callback_amount = self._get_callback_metadata_value(
+                callback,
+                "Amount",
+            )
+            if callback_amount is not None and Decimal(str(callback_amount)) != payment.amount:
+                payment.status = PaymentStatus.FAILED
+                payment.completed_at = datetime.now(UTC)
+                await session.flush()
+                raise HTTPException(
+                    status_code=400,
+                    detail="The M-Pesa callback amount does not match the payment amount.",
+                )
 
             receipt_number = self._get_callback_metadata_value(
                 callback,
@@ -208,9 +225,12 @@ class PaymentService:
         else:
             payment.status = PaymentStatus.FAILED
 
-            print(
-                f"Payment {payment.id} marked FAILED "
-                f"(result_code={callback.result_code})"
+            logger.info(
+                "Payment marked failed",
+                extra={
+                    "payment_id": str(payment.id),
+                    "result_code": callback.result_code,
+                },
             )
 
             payment.completed_at = datetime.now(UTC)

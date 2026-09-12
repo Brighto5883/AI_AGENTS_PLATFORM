@@ -1,16 +1,74 @@
 from uuid import UUID
 
 from fastapi import HTTPException
+
+from app.billing.billing_service import BillingService
+from app.billing.enums import MarketplaceBillingMode
+from app.database.models.transaction import Transaction
+from app.marketplace.enums import TransactionStatus
+from app.marketplace.schemas.contact import ContactablePublic
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database.models.wanted_post import WantedPost
 from app.marketplace.moderation.text_scanner import scan_text
-from app.marketplace.schemas.wanted_posts import WantedPostCreate, WantedPostUpdate
+from app.marketplace.schemas.wanted_posts import WantedPostCreate, WantedPostResponse, WantedPostUpdate
 
 
 class WantedPostService:
+
+    def __init__(self, billing_service: BillingService) -> None:
+        self.billing_service = billing_service
+
+    async def to_response(
+        self,
+        *,
+        wanted_post: WantedPost,
+        viewer_id: UUID | None,
+        session: AsyncSession,
+    ) -> WantedPostResponse:
+        unlocked = await self._is_contact_unlocked(
+            wanted_post=wanted_post, viewer_id=viewer_id, session=session
+        )
+        requester = wanted_post.requester
+        contact = requester if unlocked else ContactablePublic(
+            id=requester.id, name=requester.name, phone=None
+        )
+        return WantedPostResponse(
+            id=wanted_post.id,
+            requester_id=wanted_post.requester_id,
+            title=wanted_post.title,
+            description=wanted_post.description,
+            category=wanted_post.category,
+            budget=wanted_post.budget,
+            is_open=wanted_post.is_open,
+            created_at=wanted_post.created_at,
+            requester=contact,
+            contact_unlocked=unlocked,
+        )
+
+    async def _is_contact_unlocked(
+        self,
+        *,
+        wanted_post: WantedPost,
+        viewer_id: UUID | None,
+        session: AsyncSession,
+    ) -> bool:
+        if viewer_id == wanted_post.requester_id or not self.billing_service.billing_enabled:
+            return True
+        if wanted_post.requester.billing_mode == MarketplaceBillingMode.SUBSCRIPTION:
+            return True
+        if viewer_id is None:
+            return False
+        result = await session.execute(
+            select(Transaction.id).where(
+                Transaction.wanted_id == wanted_post.id,
+                Transaction.initiator_id == viewer_id,
+                Transaction.status == TransactionStatus.PAID,
+            ).limit(1)
+        )
+        return result.scalar_one_or_none() is not None
 
     async def create_wanted_post(
         self,
@@ -56,7 +114,12 @@ class WantedPostService:
         return list(result.scalars().all())
 
 # ==================================================================================
-    async def get_wanted_post(self, wanted_id: UUID, session: AsyncSession) -> WantedPost:
+    async def get_wanted_post(
+        self,
+        wanted_id: UUID,
+        session: AsyncSession,
+        viewer_id: UUID | None = None,
+    ) -> WantedPost:
         result = await session.execute(
             select(WantedPost)
             .options(selectinload(WantedPost.requester))
@@ -65,6 +128,13 @@ class WantedPostService:
         wanted_post = result.scalar_one_or_none()
 
         if wanted_post is None:
+            raise HTTPException(status_code=404, detail="Wanted post not found.")
+
+        if (
+            viewer_id is not None
+            and wanted_post.requester_id != viewer_id
+            and not wanted_post.is_open
+        ):
             raise HTTPException(status_code=404, detail="Wanted post not found.")
 
         return wanted_post

@@ -17,9 +17,7 @@ from app.payments.donation_schemas import (
 )
 from app.payments.enums import PaymentProviderType
 from app.payments.payment_schemas import PaymentRequest
-from app.payments.providers.mpesa_payment_provider import (
-    normalize_phone_number,
-)
+from app.utils.phone import normalize_kenyan_phone_number
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +38,7 @@ async def create_donation(
     session: AsyncSession = Depends(get_async_session),
 ):
     try:
-        normalized_phone = normalize_phone_number(
+        normalized_phone = normalize_kenyan_phone_number(
             data.phone_number
         )
     except ValueError as exc:

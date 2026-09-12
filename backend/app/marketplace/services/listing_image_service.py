@@ -12,6 +12,7 @@ from app.marketplace.media.image_processing import (
     InvalidImageError,
 )
 from app.marketplace.media.image_storage import ImageStorage
+from app.marketplace.moderation.image_scanner import ImageContactScanner
 
 
 class ListingImageService:
@@ -22,11 +23,13 @@ class ListingImageService:
         image_processor: ImageProcessor,
         max_images: int,
         url_expiration_seconds: int,
+        image_scanner: ImageContactScanner,
     ) -> None:
         self.image_storage = image_storage
         self.image_processor = image_processor
         self.max_images = max_images
         self.url_expiration_seconds = url_expiration_seconds
+        self.image_scanner = image_scanner
 
 # ==================================================================================
     async def create_images(
@@ -35,6 +38,7 @@ class ListingImageService:
         listing_id: uuid.UUID,
         uploads: Sequence[ImageUpload],
         session: AsyncSession,
+        scan_for_contact: bool = False,
     ) -> tuple[list[ListingImage], list[str]]:
 
         if len(uploads) > self.max_images:
@@ -52,9 +56,19 @@ class ListingImageService:
         try:
             for display_order, upload in enumerate(uploads):
 
-                processed = await self.image_processor.process(
-                    upload
-                )
+                if scan_for_contact:
+                    scan_result = self.image_scanner.scan(upload.file)
+                    if not scan_result["passed"]:
+                        raise HTTPException(
+                            status_code=400,
+                            detail={
+                                "message": "Image contains prohibited contact information.",
+                                "reason": scan_result["reason"],
+                                "flagged": scan_result["flagged"],
+                            },
+                        )
+
+                processed = await self.image_processor.process(upload)
 
                 storage_key = (
                     f"listings/"
@@ -105,6 +119,7 @@ class ListingImageService:
         listing_id: uuid.UUID,
         uploads: Sequence[ImageUpload],
         session: AsyncSession,
+        scan_for_contact: bool = False,
     ) -> list[ListingImage]:
         if not uploads:
             return []
@@ -139,9 +154,19 @@ class ListingImageService:
 
         try:
             for index, upload in enumerate(uploads):
-                processed = await self.image_processor.process(
-                    upload
-                )
+                if scan_for_contact:
+                    scan_result = self.image_scanner.scan(upload.file)
+                    if not scan_result["passed"]:
+                        raise HTTPException(
+                            status_code=400,
+                            detail={
+                                "message": "Image contains prohibited contact information.",
+                                "reason": scan_result["reason"],
+                                "flagged": scan_result["flagged"],
+                            },
+                        )
+
+                processed = await self.image_processor.process(upload)
 
                 storage_key = (
                     f"listings/"

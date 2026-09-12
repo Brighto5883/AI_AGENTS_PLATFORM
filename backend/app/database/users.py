@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from fastapi import Depends, Request
@@ -15,18 +16,21 @@ from app.database.models.user import User
 from app.database.session import get_async_session
 
 
+logger = logging.getLogger(__name__)
+
+
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]): # 1 usage
     reset_password_token_secret = settings.JWT_SECRET
     verification_token_secret = settings.JWT_SECRET
 
     async def on_after_register(self, user: User, request: Request | None = None):
-        print(f"User {user.id} has registered.")
+        logger.info("User registered", extra={"user_id": str(user.id)})
 
     async def on_after_forgot_password(self, user: User, token: str, request: Request | None = None):
-        print(f"User {user.id} has forgot their password. Reset token: {token}")
+        logger.info("Password reset requested", extra={"user_id": str(user.id)})
 
     async def on_after_request_verify(self, user: User, token: str, request: Request | None = None):
-        print(f"Verification requested for user {user.id}. Verification token: {token}")
+        logger.info("Email verification requested", extra={"user_id": str(user.id)})
 
 async def get_user_db(session: AsyncSession = Depends(get_async_session)):
     yield SQLAlchemyUserDatabase(session, User)

@@ -55,3 +55,7 @@ dump.rdb
 # =========================
 .DS_Store
 Thumbs.dbmarketplace_old/
+
+# Local development archives
+*.tar.gz
+*.patch

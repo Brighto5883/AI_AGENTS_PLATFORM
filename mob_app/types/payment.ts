@@ -41,3 +41,6 @@ export interface PaymentVerificationResult {
   message: string;
 
 }
+export type VerifyTransactionInput = {
+  transactionCode: string;
+};
