@@ -68,8 +68,8 @@ type MarketplaceAction = {
 
 const marketplaceActions: MarketplaceAction[] = [
   {
-    title: "Sell something",
-    description: "List an item for the KU community.",
+    title: "SELL SOMETHING",
+    description: "List an item you want to sell.",
     icon: "pricetag-outline",
     iconColor: "#2563eb",
     iconBackground: "#dbeafe",
@@ -77,7 +77,7 @@ const marketplaceActions: MarketplaceAction[] = [
   },
 
   {
-    title: "Buy something",
+    title: "BUY SOMETHING",
     description: "Browse everything currently for sale.",
     icon: "bag-handle-outline",
     iconColor: "#0891b2",
@@ -86,24 +86,24 @@ const marketplaceActions: MarketplaceAction[] = [
   },
 
   {
-    title: "Buyers' Enquiries",
-    description: "Browse what people are looking for.",
+    title: "REQUIRED BY BUYERS",
+    description: "Look what buyers are asking for.",
     icon: "search-outline",
     iconColor: "#16a34a",
     iconBackground: "#dcfce7",
     path: "/marketplace/wanted",
   },
   {
-    title: "Post a requirement",
-    description: "Post what you need and sellers will reach out.",
+    title: "POST WHAT YOU REQUIRE",
+    description: "Post any item you need and sellers will reach out.",
     icon: "create-outline",
     iconColor: "#9333ea",
     iconBackground: "#f3e8ff",
     path: "/marketplace/wanted/create-wanted",
   },
   {
-    title: "My Feed",
-    description: "Manage your listings and other posts.",
+    title: "VIEW MY POSTS",
+    description: "Manage all your listings posts here.",
     icon: "person-outline",
     iconColor: "#ea580c",
     iconBackground: "#ffedd5",
@@ -435,7 +435,7 @@ export default function Marketplace() {
         }}
         ListHeaderComponent={
           <View className="mb-8">
-            
+
         {/* ================================================================
             Header
         ================================================================= */}
@@ -451,7 +451,7 @@ export default function Marketplace() {
                   : "mt-2 text-4xl font-bold text-gray-950"
               }
             >
-              Discover. Buy. Sell.
+              Discover. Buy. Sell. Enquire. Connect
             </Text>
 
             <Text className="mt-3 max-w-2xl text-base leading-6 text-gray-500">
@@ -687,7 +687,7 @@ export default function Marketplace() {
                     onPress={() =>
                       router.push(action.path)
                     }
-                    className="min-h-[126px] rounded-2xl border border-gray-200 bg-white p-4"
+                    className="min-h-31.5 rounded-2xl border border-gray-200 bg-white p-4"
                     style={({ pressed }) => ({
                       width: actionCardWidth,
                       opacity: pressed ? 0.8 : 1,

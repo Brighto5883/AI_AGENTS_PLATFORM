@@ -1,11 +1,11 @@
 export const categories = [
-  'phones',
-  'laptops',
+  'Electonics(phones)',
+  'Electronics(Others)',
   'Household Items',
   'Hostels and rentals',
-  "electronics",
+  "Services",
+  "Laptops",
   "fashion",
-  "services",
   "jobs",
   "other",
 ] as const;
