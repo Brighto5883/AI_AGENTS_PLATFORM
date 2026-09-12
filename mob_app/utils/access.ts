@@ -2,18 +2,25 @@
 // Everyone is effectively "free" tier right now. When you add a
 // User.plan field + expose it via /users/me, replace the body of
 // this function only — nothing else in the app needs to change.
-import { Service } from '@/types/home';
 
-export function canAccessService(service: Service, currentUserPlan = "free") {
+import type { Service, UserPlan } from "@/config/services";
 
-    if (service.status !== "available") return false;
-    
-    const planRank = {
-      free: 0,
-      pro: 1,
-      enterprise: 2
-    };
-  
-    return planRank[currentUserPlan] >= planRank[service.minPlan];
-  
+const planRank: Record<UserPlan, number> = {
+  free: 0,
+  pro: 1,
+  enterprise: 2,
+};
+
+export function canAccessService(
+  service: Service,
+  currentUserPlan: UserPlan = "free",
+): boolean {
+  if (service.status !== "available") {
+    return false;
   }
+
+  return (
+    planRank[currentUserPlan] >=
+    planRank[service.minPlan]
+  );
+}

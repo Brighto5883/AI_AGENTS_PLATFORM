@@ -1,11 +1,12 @@
 import uuid
 from datetime import UTC, datetime
+from decimal import Decimal
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Numeric, String
+from sqlalchemy import DateTime, Enum, ForeignKey, Numeric
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.database.db import Base
+from app.database.base import Base
 from app.marketplace.enums import PaymentRequiredFrom, TransactionStatus
 
 
@@ -54,7 +55,7 @@ class Transaction(Base):
         index=True,
     )
 
-    fee_amount: Mapped[float] = mapped_column(
+    fee_amount: Mapped[Decimal] = mapped_column(
         Numeric(12, 2),
         nullable=False,
     )
@@ -81,17 +82,6 @@ class Transaction(Base):
         ),
         nullable=False,
         default=TransactionStatus.PENDING_PAYMENT,
-    )
-
-    payment_reference: Mapped[str | None] = mapped_column(
-        String(255),
-        nullable=True,
-        unique=True,
-    )
-
-    paid_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
     )
 
     created_at: Mapped[datetime] = mapped_column(

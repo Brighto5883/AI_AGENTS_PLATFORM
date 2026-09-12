@@ -10,7 +10,7 @@ import app.database.models  # noqa: F401 — registers every model onto Base.met
 from app.config.settings import settings
 
 # --- Our additions: make Alembic aware of the actual app ---
-from app.database.db import Base
+from app.database.base import Base
 
 config = context.config
 

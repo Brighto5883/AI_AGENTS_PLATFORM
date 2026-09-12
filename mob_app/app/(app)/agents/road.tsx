@@ -15,7 +15,6 @@ export default function RoadAgent() {
       file, 
     });
 
-    console.log("Road response:", result);
 
     return {
       method: result.method,

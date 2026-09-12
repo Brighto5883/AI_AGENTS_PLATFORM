@@ -1,14 +1,14 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.container import container
+from app.database.models.transaction import Transaction
 from app.database.models.user import User
 from app.database.session import get_async_session
 from app.database.users import current_active_user
 from app.marketplace.schemas.transactions import (
-    TransactionCreate,
     TransactionResponse,
 )
 
@@ -24,7 +24,6 @@ router = APIRouter(
 )
 async def create_listing_connection(
     listing_id: UUID,
-    data: TransactionCreate,
     authenticated_user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
 ):
@@ -33,10 +32,9 @@ async def create_listing_connection(
         session=session,
     )
 
-    return await container.transaction_service.create_connection(
+    return await container.transaction_service.create_listing_connection(
         listing=listing,
         initiator_id=authenticated_user.id,
-        request_other_party_to_pay=data.request_other_party_to_pay,
         session=session,
     )
 
@@ -62,3 +60,28 @@ async def request_other_party_to_pay(
         user_id=authenticated_user.id,
         session=session,
     )
+
+@router.post(
+    "/{transaction_id}/decline-payment",
+    response_model=TransactionResponse,
+)
+async def decline_payment_request(
+    transaction_id: UUID,
+    authenticated_user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+):
+    transaction = await session.get(Transaction, transaction_id)
+
+    if transaction is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Transaction not found.",
+        )
+
+    return await container.transaction_service.decline_payment_request(
+        transaction=transaction,
+        user_id=authenticated_user.id,
+        session=session,
+    )
+
+

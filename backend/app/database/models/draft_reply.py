@@ -10,7 +10,7 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.api.schemas.enums import DraftStatus
-from app.database.db import Base
+from app.database.base import Base
 
 if TYPE_CHECKING:
     from app.database.models.whatsapp_conversation import (

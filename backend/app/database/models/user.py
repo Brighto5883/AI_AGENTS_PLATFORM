@@ -1,10 +1,11 @@
 from datetime import UTC, datetime
 
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID
-from sqlalchemy import DateTime, String
+from sqlalchemy import DateTime, Enum, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.database.db import Base
+from app.billing.enums import BillingStatus, MarketplaceBillingMode
+from app.database.base import Base
 
 
 class User(SQLAlchemyBaseUserTableUUID, Base):
@@ -33,7 +34,30 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         default=lambda: datetime.now(UTC),
         nullable=False,
     )
-  
+
+    billing_mode: Mapped[MarketplaceBillingMode] = mapped_column(
+    Enum(
+        MarketplaceBillingMode,
+        name="billing_mode",
+    ),
+    nullable=False,
+    default=MarketplaceBillingMode.CONNECTION_FEE,
+    )
+
+    billing_status: Mapped[BillingStatus] = mapped_column(
+        Enum(
+            BillingStatus,
+            name="billing_status",
+        ),
+        nullable=False,
+        default=BillingStatus.ACTIVE,
+    )
+
+    marketplace_listing_limit: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+    
     #   RELATIONSHIP BETWEEN TABLES
     queries = relationship(
         "QueryHistory",
@@ -52,7 +76,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
 
     wanted_posts = relationship(
         "WantedPost",
-        back_populates="buyer",
+        back_populates="requester",
     )
 
     bought_transactions = relationship(

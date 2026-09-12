@@ -1,14 +1,22 @@
 import asyncio
 
+from app.config.settings import settings
 from app.core.factories import (
     create_agent_router,
     create_agent_service,
+    create_billing_service,
     create_chat_service,
     create_draft_service,
     create_email_agent,
+    create_feedback_service,
     create_history_service,
+    create_image_processor,
+    create_image_storage,
+    create_listing_image_service,
     create_listing_service,
     create_memory_service,
+    create_payment_service,
+    create_pricing_service,
     create_road_design_agent,
     create_transaction_service,
     create_transcription_client,
@@ -61,11 +69,33 @@ class Container:
 
         self.memory_service = create_memory_service()
 
-        self.listing_service = create_listing_service()
+        self.pricing_service = create_pricing_service()
+
+        self.billing_service = create_billing_service(self.pricing_service)
+
+        self.image_storage = create_image_storage()
+
+        self.image_processor = create_image_processor()
+
+        self.listing_image_service = create_listing_image_service(
+            image_storage=self.image_storage,
+            image_processor=self.image_processor,
+            max_images=settings.image_max_count_per_listing,
+            url_expiration_seconds=settings.image_url_expiration_seconds,
+        )
+
+        self.listing_service = create_listing_service(
+            billing_service=self.billing_service,
+            listing_image_service=self.listing_image_service,
+        )
 
         self.wanted_post_service = create_wanted_post_service()
 
-        self.transaction_service = create_transaction_service()
+        self.transaction_service = create_transaction_service(self.pricing_service)
+
+        self.payment_service = create_payment_service()
+
+        self.feedback_service = create_feedback_service()
 
     async def initialize(self):
         await asyncio.gather(

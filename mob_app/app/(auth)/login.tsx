@@ -56,7 +56,6 @@ export default function Login() {
 
       router.replace("/home");
 
-      console.log("Login successful");
     } catch (error) {
       console.error("Login failed:", error);
 
@@ -72,8 +71,9 @@ export default function Login() {
 
   return (
     <View className="flex-1 justify-center bg-homepage p-6">
+      
       <Text className="mb-8 text-3xl font-bold">
-        AI Agents Platform
+        Agentic Services Platform
       </Text>
 
       <TextInput
@@ -129,6 +129,16 @@ export default function Login() {
           Don't have an account? Register
         </Text>
       </Pressable>
+
+      <Pressable
+        onPress={() => router.push("/forgot-password")}
+        className="mt-3"
+      >
+        <Text className="text-center text-gray-500">
+          Forgot password?
+        </Text>
+      </Pressable>
+
     </View>
   );
 }

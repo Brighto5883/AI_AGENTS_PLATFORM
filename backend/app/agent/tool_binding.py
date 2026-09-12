@@ -49,9 +49,8 @@ def bind_context_arg(
 
         required = new_schema.get("required")
 
-        if isinstance(required, list):
-            if arg_name in required:
-                required.remove(arg_name)
+        if isinstance(required, list) and arg_name in required:
+            required.remove(arg_name)
 
     elif isinstance(new_schema, type) and issubclass(new_schema, BaseModel):
         remaining_fields = {

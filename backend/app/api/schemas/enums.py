@@ -18,3 +18,11 @@ class DraftStatus(StrEnum):
     EDITED = "edited"      # human changed the content, then approved
     REJECTED = "rejected"  # human declined to send it
     SENT = "sent"          # actually delivered (Phase E hooks in here)
+
+class FeedbackCategory(StrEnum):
+    BUG = "bug"
+    PAYMENT = "payment"
+    MARKETPLACE = "marketplace"
+    ACCOUNT = "account"
+    SUGGESTION = "suggestion"
+    GENERAL = "general"

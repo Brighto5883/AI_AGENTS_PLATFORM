@@ -4,7 +4,7 @@ from sqlalchemy import Column, Float, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
-from app.database.db import Base
+from app.database.base import Base
 
 
 class QueryHistory(Base):

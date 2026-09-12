@@ -1,11 +1,12 @@
 import uuid
 from datetime import UTC, datetime
+from decimal import Decimal
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.database.db import Base
+from app.database.base import Base
 
 
 class Listing(Base):
@@ -34,7 +35,7 @@ class Listing(Base):
         nullable=False,
     )
 
-    price: Mapped[float] = mapped_column(
+    price: Mapped[Decimal] = mapped_column(
         Numeric(12, 2),
         nullable=False,
     )
@@ -53,6 +54,12 @@ class Listing(Base):
     is_approved: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
+        nullable=False,
+    )
+
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
         nullable=False,
     )
 
@@ -76,4 +83,12 @@ class Listing(Base):
     seller = relationship(
         "User",
         back_populates="listings",
+    )
+
+    images = relationship(
+        "ListingImage",
+        back_populates="listing",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="ListingImage.display_order",
     )

@@ -5,9 +5,10 @@ tmux kill-session -t $SESSION 2>/dev/null
 
 tmux new-session -d -s $SESSION -n infra "docker compose up -d; zsh"
 tmux new-window -t $SESSION -n backend "cd backend && uv run python main.py"
-tmux new-window -t $SESSION -n frontend "cd frontend && npm run dev"
-tmux new-window -t $SESSION -n ngrok "ngrok http 5173"
-tmux new-window -t $SESSION -n mobile "cd mob_app && npx expo start --lan"
+tmux new-window -t $SESSION -n mobile "cd mob_app && npx expo start --clear --lan"
+#tmux new-window -t $SESSION -n frontend "cd frontend && npm run dev"
+# tmux new-window -t $SESSION -n ngrok "ngrok http 5173"
+
 
 tmux attach -t $SESSION
 

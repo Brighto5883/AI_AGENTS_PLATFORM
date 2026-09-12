@@ -1,3 +1,5 @@
+
+
 REACT_NATIVE LEARNING ORDER
 PHASE 1 — React Native fundamentals
 1. View
@@ -41,7 +43,7 @@ PHASE 3 — Your FastAPI integration
 
               ↓
 
-PHASE 4 — AI Agents
+PHASE 4 — AI Agents   
 31. LLM fundamentals
 32. Structured outputs
 33. Tool calling
@@ -69,16 +71,12 @@ PHASE 5 — AI Agents Platform
 
 
 
-IN-PHASE-STEPS
-18. File uploads
+Conceptually:
 
-Step 1 → Select a file on the device
-Step 2 → Understand the selected-file object
-Step 3 → Store/display the selected file in state
-Step 4 → Send the file to FastAPI
-Step 5 → Handle upload loading/error/success states
-Step 6 → Connect uploads to an Agent
-
-
-OWN_STEPS
-1. Created utils, utils/access.ts and types/Home.ts
+Credential	       Purpose
+Consumer Key	   Identifies your Daraja application
+Consumer Secret	   Authenticates your Daraja application
+Shortcode	       Identifies the M-Pesa business/till/paybill side
+Passkey	           Used to construct the STK Push password
+Callback URL	   Where Safaricom sends payment results
+Base URL	       Tells our application sandbox vs production

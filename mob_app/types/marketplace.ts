@@ -1,0 +1,89 @@
+export const categories = [
+  'phones',
+  'laptops',
+  'Household Items',
+  'Hostels and rentals',
+  "electronics",
+  "fashion",
+  "services",
+  "jobs",
+  "other",
+] as const;
+
+export type MarketplaceCategory = typeof categories[number];
+
+export interface Contactable {
+  id: string;
+  name: string | null;
+  phone: string | null;
+}
+
+export type ListingImage = {
+  id: string;
+  original_filename: string;
+  content_type: string;
+  file_size: number;
+  display_order: number;
+  url: string;
+};
+
+/*Equivalent to ListingResponse from the backend*/
+export type Listing = { 
+  id: string;
+  seller_id: string;
+  title: string;
+  description: string;
+  price: string;
+  category: MarketplaceCategory;
+  image_path: string | null;
+  is_approved: boolean;
+  is_active: boolean;
+  needs_review: boolean;
+  review_reason: string | null;
+  created_at: string;
+  images: ListingImage[];
+  seller: Contactable;
+};
+
+export type ListingSort =
+  | "recent"
+  | "price_asc"
+  | "price_desc";
+
+  export type ListingFilters = {
+    search?: string;
+    category?: MarketplaceCategory;
+    min_price?: number;
+    max_price?: number;
+    sort?: ListingSort;
+    limit?: number;
+    offset?: number;
+  };
+
+  /* Response from the backend 'marketplace/get_listings/ */
+  export type ListingsResponse = {
+    items: Listing[];
+    next_offset: number;
+    has_more: boolean;
+  };
+
+  export interface WantedPost {
+    id: string;
+    requester_id: string;
+    title: string;
+    description: string;
+    category: MarketplaceCategory;
+    budget: string | null;
+    is_open: boolean;
+    created_at: string;
+    requester: Contactable;
+  }
+  
+  export interface WantedPostCreateInput {
+    title: string;
+    description: string;
+    category: MarketplaceCategory;
+    budget?: number;
+  }
+
+  

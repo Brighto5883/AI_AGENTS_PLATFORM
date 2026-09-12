@@ -1,8 +1,12 @@
+from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from app.database.models.listing import Listing
+from app.marketplace.schemas.contact import ContactablePublic
 
 
 class ListingCreate(BaseModel):
@@ -10,6 +14,34 @@ class ListingCreate(BaseModel):
     description: str = Field(min_length=1)
     price: Decimal = Field(gt=0)
     category: str = Field(min_length=1, max_length=100)
+
+class ListingUpdate(BaseModel):
+    title: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=200,
+    )
+    description: str | None = Field(
+        default=None,
+        min_length=1,
+    )
+    price: Decimal | None = Field(
+        default=None,
+        gt=0,
+    )
+    category: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=100,
+    )
+
+class ListingImageResponse(BaseModel):
+    id: UUID
+    original_filename: str
+    content_type: str
+    file_size: int
+    display_order: int
+    url: str
 
 
 class ListingResponse(BaseModel):
@@ -23,6 +55,17 @@ class ListingResponse(BaseModel):
     category: str
     image_path: str | None
     is_approved: bool
+    is_active: bool
     needs_review: bool
     review_reason: str | None
     created_at: datetime
+    images: list[ListingImageResponse]
+    seller: ContactablePublic
+
+
+@dataclass(frozen=True)
+class ListingCreationResult:
+    listing: Listing
+    requires_payment: bool
+    payment_amount: Decimal | None
+    stored_image_keys: list[str]

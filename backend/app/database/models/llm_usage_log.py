@@ -5,7 +5,7 @@ from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text, fun
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.database.db import Base
+from app.database.base import Base
 
 
 class LLMUsageLog(Base):

@@ -1,3 +1,4 @@
+from app.api.routes.password_reset import router as password_reset_router
 from app.api.schemas.auth import (
     UserCreate,
     UserRead,
@@ -27,16 +28,7 @@ def register_auth_routes(api):
     )
 
     api.include_router(
-        fastapi_users.get_reset_password_router(),
-        prefix="/auth",
-        tags=["auth"],
-    )
-
-    api.include_router(
-        fastapi_users.get_verify_router(
-            UserRead
-        ),
-        prefix="/auth",
+        password_reset_router,
         tags=["auth"],
     )
 
@@ -48,3 +40,23 @@ def register_auth_routes(api):
         prefix="/users",
         tags=["users"],
     )
+
+
+
+
+
+
+
+    # api.include_router(
+    #     fastapi_users.get_verify_router(
+    #         UserRead
+    #     ),
+    #     prefix="/auth",
+    #     tags=["auth"],
+    # )
+
+    # api.include_router(
+    #     fastapi_users.get_reset_password_router(),
+    #     prefix="/auth",
+    #     tags=["auth"],
+    # )

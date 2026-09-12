@@ -11,6 +11,7 @@ __pycache__/
 
 # Database
 *.db
+*.base
 
 # Cache
 data/cache/

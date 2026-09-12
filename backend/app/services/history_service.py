@@ -1,5 +1,6 @@
-from sqlalchemy import select
 from uuid import UUID
+
+from sqlalchemy import select
 
 from app.database.models.query_history import QueryHistory
 

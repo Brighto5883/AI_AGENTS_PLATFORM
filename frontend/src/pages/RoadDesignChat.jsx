@@ -32,7 +32,7 @@ export default function RoadDesignChat() {
 
             });
 
-            console.log(response.data);
+        
 
             setAnswer(response.data.answer);
             setDocuments(response.data.document);

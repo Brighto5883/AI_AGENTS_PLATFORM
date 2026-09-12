@@ -1,11 +1,12 @@
 import uuid
 from datetime import UTC, datetime
+from decimal import Decimal
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.database.db import Base
+from app.database.base import Base
 
 
 class WantedPost(Base):
@@ -17,7 +18,7 @@ class WantedPost(Base):
         default=uuid.uuid4,
     )
 
-    buyer_id: Mapped[uuid.UUID] = mapped_column(
+    requester_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id"),
         nullable=False,
@@ -34,7 +35,13 @@ class WantedPost(Base):
         nullable=False,
     )
 
-    budget: Mapped[float | None] = mapped_column(
+    category: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+        index=True,
+    )
+    
+    budget: Mapped[Decimal | None] = mapped_column(
         Numeric(12, 2),
         nullable=True,
     )
@@ -51,7 +58,9 @@ class WantedPost(Base):
         nullable=False,
     )
 
-    buyer = relationship(
+
+    requester = relationship(
         "User",
         back_populates="wanted_posts",
     )
+

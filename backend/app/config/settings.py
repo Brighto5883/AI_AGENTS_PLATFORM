@@ -43,10 +43,38 @@ class Settings(BaseSettings):
 
         # Marketplace media
     MAX_MARKETPLACE_IMAGE_SIZE_BYTES: int = 10 * 1024 * 1024
-    MAX_MARKETPLACE_IMAGES: int = 5
 
     # Marketplace moderation
     GEMINI_SCANNER_MODEL: str = "gemini-2.5-flash-lite"
+    
+    # DARAJA YA PESA
+    MPESA_CONSUMER_KEY: str
+    MPESA_CONSUMER_SECRET: str
+    MPESA_SHORTCODE: str
+    MPESA_PASSKEY: str
+    MPESA_CALLBACK_URL: str
+    MPESA_BASE_URL: str
+
+    # R2 IMAGE UPLOAD
+    r2_endpoint_url: str
+    r2_access_key_id: str
+    r2_secret_access_key: str
+    r2_bucket_name: str
+    r2_region: str = "auto"
+
+    image_max_upload_size_mb: int = 10
+    image_max_width: int = 4096
+    image_max_height: int = 4096
+    image_max_count_per_listing: int = 5
+
+    image_url_expiration_seconds: int = 3600
+
+    # LOCAL IMAGE STORAGE
+    image_storage_backend: str = "local"
+
+    local_media_directory: str = "storage"
+
+    local_media_base_url: str = "http://localhost:8000"
     
     model_config = SettingsConfigDict(
         env_file=".env",

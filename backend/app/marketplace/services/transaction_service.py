@@ -1,4 +1,3 @@
-from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -6,17 +5,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models.listing import Listing
 from app.database.models.transaction import Transaction
+from app.database.models.wanted_post import WantedPost
 from app.marketplace.enums import PaymentRequiredFrom, TransactionStatus
-from app.marketplace.pricing.connection_fee import get_connection_fee
+from app.pricing.marketplace_pricing_service import MarketplacePricingService
 
 
 class TransactionService:
 
-    async def create_connection(
+    def __init__(
+        self,
+        pricing_service: MarketplacePricingService,
+    ):
+        self.pricing_service = pricing_service
+
+
+    async def create_listing_connection(
         self,
         listing: Listing,
         initiator_id: UUID,
-        request_other_party_to_pay: bool,
         session: AsyncSession,
     ) -> Transaction:
 
@@ -26,7 +32,7 @@ class TransactionService:
                 detail="You cannot connect with your own listing.",
             )
 
-        if not listing.is_approved:
+        if not listing.is_approved or not listing.is_active:
             raise HTTPException(
                 status_code=400,
                 detail="This listing is not available.",
@@ -35,113 +41,65 @@ class TransactionService:
         buyer_id = initiator_id
         seller_id = listing.seller_id
 
-        if request_other_party_to_pay:
-            payment_required_from = PaymentRequiredFrom.SELLER
-        else:
-            payment_required_from = PaymentRequiredFrom.BUYER
-
         transaction = Transaction(
             listing_id=listing.id,
             buyer_id=buyer_id,
             seller_id=seller_id,
             initiator_id=initiator_id,
-            fee_amount=get_connection_fee(listing.category),
-            payment_required_from=payment_required_from,
+            fee_amount = self.pricing_service.get_service_fee(
+                category=listing.category,
+                amount=listing.price,
+            ),
+            payment_required_from=PaymentRequiredFrom.BUYER,
             payer_id=None,
             status=TransactionStatus.PENDING_PAYMENT,
         )
 
         session.add(transaction)
 
-        await session.commit()
-        await session.refresh(transaction)
+        await session.flush()
 
         return transaction
 
-    async def decline_payment_request(
+
+    async def create_wanted_post_connection(
         self,
-        transaction: Transaction,
-        user_id: UUID,
+        wanted_post: WantedPost,
+        initiator_id: UUID,
         session: AsyncSession,
     ) -> Transaction:
-
-        if transaction.status != TransactionStatus.PENDING_PAYMENT:
+        if wanted_post.requester_id == initiator_id:
             raise HTTPException(
                 status_code=400,
-                detail="This transaction is no longer awaiting payment.",
+                detail="You cannot respond to your own wanted post.",
             )
 
-        if transaction.payment_required_from == PaymentRequiredFrom.BUYER:
-            expected_payer_id = transaction.buyer_id
-        else:
-            expected_payer_id = transaction.seller_id
-
-        if user_id != expected_payer_id:
+        if not wanted_post.is_open:
             raise HTTPException(
-                status_code=403,
-                detail="You are not the party currently requested to pay.",
+                status_code=400,
+                detail="This wanted post is no longer open.",
             )
 
-        if transaction.initiator_id == transaction.buyer_id:
-            transaction.payment_required_from = PaymentRequiredFrom.BUYER
-        else:
-            transaction.payment_required_from = PaymentRequiredFrom.SELLER
+        transaction = Transaction(
+            wanted_id=wanted_post.id,
+            buyer_id=wanted_post.requester_id,
+            seller_id=initiator_id,
+            initiator_id=initiator_id,
+            fee_amount=self.pricing_service.get_service_fee(
+                category=wanted_post.category,
+                amount=wanted_post.budget,
+            ),
+            payment_required_from=PaymentRequiredFrom.SELLER,
+            payer_id=None,
+            status=TransactionStatus.PENDING_PAYMENT,
+        )
 
-        await session.commit()
-        await session.refresh(transaction)
+        session.add(transaction)
+
+        await session.flush()
 
         return transaction
 
-    async def record_payment(
-        self,
-        transaction: Transaction,
-        payer_id: UUID,
-        payment_reference: str,
-        session: AsyncSession,
-    ) -> Transaction:
-
-        if transaction.status != TransactionStatus.PENDING_PAYMENT:
-            raise HTTPException(
-                status_code=400,
-                detail="This transaction is not awaiting payment.",
-            )
-
-        if payer_id not in (
-            transaction.buyer_id,
-            transaction.seller_id,
-        ):
-            raise HTTPException(
-                status_code=403,
-                detail="You are not a participant in this transaction.",
-            )
-
-        if (
-            transaction.payment_required_from == PaymentRequiredFrom.BUYER
-            and payer_id != transaction.buyer_id
-        ):
-            raise HTTPException(
-                status_code=403,
-                detail="The buyer is currently required to pay.",
-            )
-
-        if (
-            transaction.payment_required_from == PaymentRequiredFrom.SELLER
-            and payer_id != transaction.seller_id
-        ):
-            raise HTTPException(
-                status_code=403,
-                detail="The seller is currently required to pay.",
-            )
-
-        transaction.payer_id = payer_id
-        transaction.payment_reference = payment_reference
-        transaction.paid_at = datetime.now(UTC)
-        transaction.status = TransactionStatus.PAID
-
-        await session.commit()
-        await session.refresh(transaction)
-
-        return transaction
 
     async def request_other_party_to_pay(
         self,
@@ -166,6 +124,36 @@ class TransactionService:
             transaction.payment_required_from = PaymentRequiredFrom.SELLER
         else:
             transaction.payment_required_from = PaymentRequiredFrom.BUYER
+
+        await session.commit()
+        await session.refresh(transaction)
+
+        return transaction
+
+
+    async def decline_payment_request(
+        self,
+        transaction: Transaction,
+        user_id: UUID,
+        session: AsyncSession,
+    ) -> Transaction:
+
+        if transaction.status != TransactionStatus.PENDING_PAYMENT:
+            raise HTTPException(
+                status_code=400,
+                detail="This transaction is no longer awaiting payment.",
+            )
+
+        if transaction.initiator_id == user_id:
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "The transaction initiator cannot decline "
+                    "their own payment request."
+                ),
+            )
+
+        transaction.status = TransactionStatus.CANCELLED
 
         await session.commit()
         await session.refresh(transaction)
