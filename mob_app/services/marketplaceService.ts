@@ -6,7 +6,9 @@ import type {
   WantedPost, WantedPostCreateInput,
         } from "@/types/marketplace";
 
-        //====================================================================================
+
+      
+//====================================================================================
 type CreateListingInput = {
   title: string;
   description: string;
@@ -20,6 +22,7 @@ type CreateListingInput = {
   }[];
 };
 
+//====================================================================================
 export async function createListing(
   input: CreateListingInput
 ): Promise<Listing> {

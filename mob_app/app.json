@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "app",
-    "slug": "app",
+    "name": "Agentic Campus Services",
+    "slug": "agentic-campus-services",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -11,6 +11,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.infinit3ke.agenticcampusservices",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -46,6 +47,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "944e0c75-2656-459c-b25e-657654802a10"
+      }
+    },
+    "owner": "infinit3-ke"
   }
 }

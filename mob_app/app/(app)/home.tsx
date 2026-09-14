@@ -62,7 +62,7 @@ export default function Home() {
           {/* Header */}
           <View className="mb-7">
             <Text className="text-xs font-semibold uppercase tracking-widest text-gray-500">
-              AI Agents Platform
+              Agentic Campus Services
             </Text>
 
             <Text

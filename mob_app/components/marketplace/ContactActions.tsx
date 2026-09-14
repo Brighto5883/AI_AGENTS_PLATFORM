@@ -7,6 +7,8 @@ interface Props {
   contextLabel: string; // listing/wanted-post title, used in the pre-filled message
   isOwnPost: boolean;
   contactUnlocked?: boolean;
+  onUnlockContact?: () => void;
+  isUnlocking?: boolean;
 }
 
 export default function ContactActions({
@@ -15,6 +17,8 @@ export default function ContactActions({
   contextLabel,
   isOwnPost,
   contactUnlocked = true,
+  onUnlockContact,
+  isUnlocking = false,
 }: Props) {
   if (isOwnPost) {
     return null; // no point contacting yourself
@@ -24,8 +28,27 @@ export default function ContactActions({
     return (
       <View className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-4">
         <Text className="text-center text-sm font-semibold text-amber-900">
-          Contact is locked until the connection payment is completed.
+          Contact is locked.
         </Text>
+  
+        <Text className="mt-1 text-center text-xs leading-5 text-amber-800">
+          Complete the connection payment to unlock this contact.
+        </Text>
+  
+        {onUnlockContact && (
+          <Pressable
+            onPress={onUnlockContact}
+            disabled={isUnlocking}
+            className="mt-4 rounded-2xl bg-gray-950 py-4"
+            style={({ pressed }) => ({
+              opacity: pressed || isUnlocking ? 0.7 : 1,
+            })}
+          >
+            <Text className="text-center text-base font-bold text-white">
+              {isUnlocking ? "Starting payment..." : "Unlock Contact"}
+            </Text>
+          </Pressable>
+        )}
       </View>
     );
   }

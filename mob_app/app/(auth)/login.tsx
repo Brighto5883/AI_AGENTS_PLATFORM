@@ -73,7 +73,7 @@ export default function Login() {
     <View className="flex-1 justify-center bg-homepage p-6">
       
       <Text className="mb-8 text-3xl font-bold">
-        Agentic Services Platform
+        Agentic Campus Services
       </Text>
 
       <TextInput

@@ -6,7 +6,12 @@ import type {
   PaymentStatusResponse,
   PaymentVerificationResult,
   VerifyTransactionInput,
+  CreateMarketplacePaymentInput,
+  MarketplacePaymentResponse,
 } from "@/types/payment";
+
+
+// ================================================================================================
 export async function createDonation(
   input: CreateDonationInput,
 ): Promise<DonationResponse> {
@@ -53,6 +58,47 @@ export async function createDonation(
   return JSON.parse(responseText) as DonationResponse;
 }
 
+// ================================================================================================
+export async function createMarketplacePayment(
+  transactionId: string,
+  input: CreateMarketplacePaymentInput,
+): Promise<MarketplacePaymentResponse> {
+  const response = await apiFetch(
+    `/payments/marketplace/transactions/${transactionId}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        phone_number: input.phoneNumber,
+      }),
+    },
+  );
+
+  const responseText = await response.text();
+
+  if (!response.ok) {
+    let message = "Failed to initiate payment.";
+
+    try {
+      const errorBody = JSON.parse(responseText);
+
+      if (typeof errorBody.detail === "string") {
+        message = errorBody.detail;
+      }
+    } catch {
+      if (responseText) {
+        message = responseText;
+      }
+    }
+
+    throw new Error(message);
+  }
+
+  return JSON.parse(responseText) as MarketplacePaymentResponse;
+}
+// ================================================================================================
 export async function getPaymentStatus(
   paymentId: string,
 ): Promise<PaymentStatusResponse> {

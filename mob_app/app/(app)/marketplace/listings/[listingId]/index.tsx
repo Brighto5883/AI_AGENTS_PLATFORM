@@ -1,11 +1,13 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { deleteListing, getListing } from "@/services/marketplaceService";
-import type { Listing } from "@/types/marketplace";
 import { useAuth } from "@/context/AuthContext";
 import ContactActions from "@/components/marketplace/ContactActions";
 import FeedbackButton from "@/components/feedback/feedbackButton";
 import FeedbackModal from "@/components/feedback/FeedbackModal";
+import MarketplacePaymentModal from "@/components/marketplace/MarketplacePaymentModal";
+import { createListingConnection } from "@/services/marketplaceTransactionService";
+import type { Listing, Transaction } from "@/types/marketplace";
 import {
   ActivityIndicator,
   Alert,
@@ -38,35 +40,77 @@ export default function ListingDetails() {
   const [error, setError] = useState<string | null>(null);
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
   const [feedbackVisible, setFeedbackVisible] = useState(false);
-  
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [isUnlocking, setIsUnlocking] = useState(false);
+  const [connectionTransaction, setConnectionTransaction] =
+  useState<Transaction | null>(null);
+ // ---------------------------------------------------------------------------------   
   const imageListRef =
     useRef<FlatList<Listing["images"][number]>>(null);
 
-  useEffect(() => {
-    async function loadListing() {
+ // ---------------------------------------------------------------------------------   
+  const loadListing = async () => {
       try {
         setIsLoading(true);
         setError(null);
-
-
+    
         const data = await getListing(listingId);
-
+    
         setListing(data);
         setSelectedImageIndex(0);
       } catch (error) {
         setError(
           error instanceof Error
             ? error.message
-            : "Failed to load listing."
+            : "Failed to load listing.",
         );
       } finally {
         setIsLoading(false);
       }
-    }
+    };
 
-    loadListing();
+  useEffect(() => {
+    void loadListing();
+
   }, [listingId]);
 
+// ---------------------------------------------------------------------------------
+  const handleUnlockContact = async () => {
+    if (!listing || isUnlocking) {
+      return;
+    }
+
+    if (!user?.phone) {
+      Alert.alert(
+        "Phone number required",
+        "Add your phone number to your account before making a connection payment.",
+      );
+      return;
+    }
+  
+    try {
+      setIsUnlocking(true);
+      setError(null);
+  
+      const transaction = await createListingConnection(
+        listing.id,
+      );
+  
+      setConnectionTransaction(transaction);
+      setPaymentModalVisible(true);
+    } catch (error) {
+      Alert.alert(
+        "Unable to continue",
+        error instanceof Error
+          ? error.message
+          : "Failed to create the connection.",
+      );
+    } finally {
+      setIsUnlocking(false);
+    }
+  };
+
+// ---------------------------------------------------------------------------------
   const showPreviousImage = () => {
     if (selectedImageIndex <= 0) return;
 
@@ -80,6 +124,7 @@ export default function ListingDetails() {
     });
   };
 
+  // ---------------------------------------------------------------------------------
   const showNextImage = () => {
     if (
       !listing ||
@@ -98,10 +143,12 @@ export default function ListingDetails() {
     });
   };
 
+  // ---------------------------------------------------------------------------------
   const selectThumbnail = (index: number) => {
     setSelectedImageIndex(index);
   };
 
+  // ---------------------------------------------------------------------------------
   const openImageViewer = () => {
     setIsImageViewerOpen(true);
 
@@ -113,6 +160,7 @@ export default function ListingDetails() {
     });
   };
 
+  // ---------------------------------------------------------------------------------
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-gray-50">
@@ -125,6 +173,7 @@ export default function ListingDetails() {
     );
   }
 
+  // ---------------------------------------------------------------------------------
   if (error) {
     return (
       <View className="flex-1 items-center justify-center bg-gray-50 px-6">
@@ -135,6 +184,7 @@ export default function ListingDetails() {
     );
   }
 
+  // ---------------------------------------------------------------------------------
   if (!listing) {
     return (
       <View className="flex-1 items-center justify-center bg-gray-50">
@@ -278,12 +328,13 @@ export default function ListingDetails() {
 
             <ContactActions
               phone={listing.seller.phone}
-              contactName={listing.seller.name}
+              contactName={null}
               contextLabel={listing.title}
               isOwnPost={user?.id === listing.seller_id}
               contactUnlocked={listing.contact_unlocked}
+              onUnlockContact={handleUnlockContact}
+              isUnlocking={isUnlocking}
             />
-
 
           </View>
 
@@ -424,6 +475,20 @@ export default function ListingDetails() {
           )}
         </View>
       </Modal>
+
+      {/* Marketplace Modal */}
+      <MarketplacePaymentModal
+        visible={paymentModalVisible}
+        transaction={connectionTransaction}
+        phoneNumber={user?.phone ?? ""}
+        onClose={() => setPaymentModalVisible(false)}
+        onPaymentSuccess={async () => {
+          setPaymentModalVisible(false);
+          setConnectionTransaction(null);
+          await loadListing();
+        }}
+      />
     </ScrollView>
+    
   );
 }
