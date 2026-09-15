@@ -54,6 +54,12 @@
         "projectId": "944e0c75-2656-459c-b25e-657654802a10"
       }
     },
-    "owner": "infinit3-ke"
+    "owner": "infinit3-ke",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/944e0c75-2656-459c-b25e-657654802a10"
+    }
   }
 }

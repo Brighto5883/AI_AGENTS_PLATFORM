@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 
+from app.billing.schemas import MarketplaceBillingInfo
 from app.core.container import container
 from app.database.models.user import User
 from app.database.users import current_active_user
-from app.billing.schemas import MarketplaceBillingInfo
 
 router = APIRouter(
     prefix="/marketplace/billing",

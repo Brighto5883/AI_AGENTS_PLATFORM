@@ -11,6 +11,7 @@ from app.payments.enums import PaymentProviderType
 @dataclass(frozen=True)
 class PaymentRequest:
     payer_id: UUID
+    payer_email: str
     amount: Decimal
     purpose: str
     reference_type: str

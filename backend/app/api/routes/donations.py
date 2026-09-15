@@ -51,11 +51,12 @@ async def create_donation(
 
     request = PaymentRequest(
         payer_id=authenticated_user.id,
+        payer_email=authenticated_user.email,
         amount=Decimal(data.amount),
         purpose="platform_donation",
         reference_type="donation",
         reference_id=payment_id,
-        provider=PaymentProviderType.MPESA,
+        provider=PaymentProviderType.PAYSTACK,
         phone_number=normalized_phone,
     )
 

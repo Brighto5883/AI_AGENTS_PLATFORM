@@ -9,8 +9,8 @@ from sqlalchemy.orm import selectinload
 from app.billing.billing_service import BillingService
 from app.billing.enums import MarketplaceBillingMode
 from app.database.models.listing import Listing
-from app.database.models.user import User
 from app.database.models.transaction import Transaction
+from app.database.models.user import User
 from app.marketplace.enums import TransactionStatus
 from app.marketplace.media.schemas import ImageUpload
 from app.marketplace.moderation.text_scanner import scan_text
@@ -70,6 +70,7 @@ class ListingService:
                 ),
             )
 
+# ==================================================================================
     async def create_listing(
         self,
         seller: User,
@@ -94,22 +95,23 @@ class ListingService:
             )
 
         # Contact-information protection is a marketplace invariant.
-        moderation_result = scan_text(
-            f"{data.title} {data.description}"
-        )
-
-        if not moderation_result["passed"]:
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "message": (
-                        "Listing contains prohibited contact "
-                        "information."
-                    ),
-                    "reason": moderation_result["reason"],
-                    "flagged": moderation_result["flagged"],
-                },
+        if billing_decision.requires_contact_scanning:
+            moderation_result = scan_text(
+                f"{data.title} {data.description}"
             )
+
+            if not moderation_result["passed"]:
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "message": (
+                            "Listing contains prohibited contact "
+                            "information."
+                        ),
+                        "reason": moderation_result["reason"],
+                        "flagged": moderation_result["flagged"],
+                    },
+                )
 
         listing = Listing(
             seller_id=seller.id,
@@ -262,6 +264,7 @@ class ListingService:
             contact_unlocked=contact_unlocked,
         )
 
+# ==================================================================================
     async def _is_contact_unlocked(
         self,
         *,

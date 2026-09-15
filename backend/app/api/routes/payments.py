@@ -4,18 +4,19 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.container import container
 from app.database.models.user import User
 from app.database.session import get_async_session
 from app.database.users import current_active_user
-from app.utils.phone import normalize_kenyan_phone_number as normalize_phone_number
-from app.core.container import container
 from app.marketplace.schemas.payments import MarketplacePaymentCreate
+from app.payments.enums import PaymentProviderType
 from app.payments.payment_schemas import (
     PaymentInitiationResult,
     PaymentRequest,
     PaymentVerificationResult,
     VerifyTransactionRequest,
 )
+from app.utils.phone import normalize_kenyan_phone_number as normalize_phone_number
 
 logger = logging.getLogger(__name__)
 
@@ -88,8 +89,9 @@ async def initiate_listing_payment(
 
     request = PaymentRequest(
         payer_id=authenticated_user.id, amount=decision.listing_fee,
+        payer_email=authenticated_user.email,
         purpose="marketplace_listing_fee", reference_type="listing",
-        reference_id=listing.id, provider=PaymentProviderType.MPESA,
+        reference_id=listing.id, provider=PaymentProviderType.PAYSTACK,
         phone_number=phone_number,
     )
     return await container.payment_service.initiate_payment(request=request, session=session)
@@ -118,8 +120,9 @@ async def initiate_connection_payment(
 
     request = PaymentRequest(
         payer_id=authenticated_user.id, amount=transaction.fee_amount,
+        payer_email=authenticated_user.email,
         purpose="marketplace_connection_fee", reference_type="transaction",
-        reference_id=transaction.id, provider=PaymentProviderType.MPESA,
+        reference_id=transaction.id, provider=PaymentProviderType.PAYSTACK,
         phone_number=phone_number,
     )
     return await container.payment_service.initiate_payment(request=request, session=session)

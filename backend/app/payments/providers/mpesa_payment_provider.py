@@ -8,12 +8,12 @@ import httpx
 from app.config.settings import settings
 from app.payments.enums import PaymentProviderType
 from app.payments.payment_provider import PaymentProvider
-from app.utils.phone import normalize_kenyan_phone_number
 from app.payments.payment_schemas import (
     PaymentInitiationResult,
     PaymentRequest,
     PaymentVerificationResult,
 )
+from app.utils.phone import normalize_kenyan_phone_number
 
 
 # ================================================================================================
@@ -40,6 +40,7 @@ class MpesaPaymentProvider(PaymentProvider):
         )
 
         account_reference = str(request.reference_id).replace("-", "")[:12]
+
         transaction_description = {
             "platform_donation": "Platform donation",
             "marketplace_listing_fee": "Marketplace listing",
@@ -50,10 +51,14 @@ class MpesaPaymentProvider(PaymentProvider):
             "BusinessShortCode": settings.MPESA_SHORTCODE,
             "Password": password,
             "Timestamp": timestamp,
-            "TransactionType": "CustomerPayBillOnline",
+            "TransactionType": settings.MPESA_TRANSACTION_TYPE,
             "Amount": amount,
             "PartyA": phone_number,
-            "PartyB": settings.MPESA_SHORTCODE,
+            "PartyB": (
+                settings.MPESA_TILL_NUMBER
+                if settings.MPESA_TRANSACTION_TYPE == "CustomerBuyGoodsOnline"
+                else settings.MPESA_SHORTCODE
+            ),
             "PhoneNumber": phone_number,
             "CallBackURL": settings.MPESA_CALLBACK_URL,
             "AccountReference": account_reference,
@@ -99,23 +104,34 @@ class MpesaPaymentProvider(PaymentProvider):
 
 # ================================================================================================
     async def _get_access_token(self) -> str:
+        consumer_key = settings.MPESA_CONSUMER_KEY
+        consumer_secret = settings.MPESA_CONSUMER_SECRET
+
+        if not consumer_key or not consumer_secret:
+            raise RuntimeError(
+                "MPESA_CONSUMER_KEY and MPESA_CONSUMER_SECRET "
+                "are required when the M-Pesa provider is enabled."
+            )
+
         async with httpx.AsyncClient(timeout=15.0) as client:
             response = await client.get(
                 f"{settings.MPESA_BASE_URL}/oauth/v1/generate",
-                params={
-                    "grant_type": "client_credentials",
-                },
-                auth=(
-                    settings.MPESA_CONSUMER_KEY,
-                    settings.MPESA_CONSUMER_SECRET,
-                ),
+                params={"grant_type": "client_credentials"},
+                auth=(consumer_key, consumer_secret),
             )
 
-        response.raise_for_status()
+            response.raise_for_status()
 
-        data = response.json()
+            data = response.json()
 
-        return data["access_token"]
+            access_token = data.get("access_token")
+
+            if not access_token:
+                raise RuntimeError(
+                    "M-Pesa OAuth response did not contain an access token."
+                )
+
+            return access_token
 
 # =====================================================================================
     @staticmethod

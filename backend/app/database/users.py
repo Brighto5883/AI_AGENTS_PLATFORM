@@ -15,7 +15,6 @@ from app.config.settings import settings
 from app.database.models.user import User
 from app.database.session import get_async_session
 
-
 logger = logging.getLogger(__name__)
 
 

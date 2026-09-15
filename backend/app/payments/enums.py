@@ -3,6 +3,7 @@ from enum import StrEnum
 
 class PaymentProviderType(StrEnum):
     MPESA = "mpesa"
+    PAYSTACK = "paystack"
 
 
 class PaymentStatus(StrEnum):

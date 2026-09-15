@@ -1,3 +1,6 @@
+import hashlib
+import hmac
+import json
 import logging
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -7,6 +10,7 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config.settings import settings
 from app.database.models.payment import Payment
 from app.payments.enums import PaymentProviderType, PaymentStatus
 from app.payments.payment_callback_schemas import MpesaStkCallback
@@ -81,6 +85,9 @@ class PaymentService:
             raise
 
         payment.checkout_request_id = result.checkout_request_id
+
+        if result.provider_reference is not None:
+            payment.provider_reference = result.provider_reference
 
         if not result.success:
             payment.status = PaymentStatus.FAILED
@@ -364,3 +371,119 @@ class PaymentService:
             amount=payment.amount,
             message="Payment verified successfully.",
         )
+
+# =====================================================================================
+    async def process_paystack_webhook(
+        self,
+        *,
+        payload: bytes,
+        signature: str | None,
+        session: AsyncSession,
+    ) -> Payment | None:
+        if not settings.PAYSTACK_SECRET_KEY:
+            raise HTTPException(
+                status_code=500,
+                detail="Paystack secret key is not configured.",
+            )
+
+        if not signature:
+            raise HTTPException(
+                status_code=401,
+                detail="Missing Paystack signature.",
+            )
+
+        expected_signature = hmac.new(
+            settings.PAYSTACK_SECRET_KEY.encode(),
+            payload,
+            hashlib.sha512,
+        ).hexdigest()
+
+        if not hmac.compare_digest(
+            expected_signature,
+            signature,
+        ):
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid Paystack signature.",
+            )
+
+        try:
+            event = json.loads(payload)
+        except json.JSONDecodeError as exc:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid Paystack webhook payload.",
+            ) from exc
+
+        if event.get("event") != "charge.success":
+            return None
+
+        data = event.get("data") or {}
+
+        provider_reference = data.get("reference")
+
+        if not provider_reference:
+            raise HTTPException(
+                status_code=400,
+                detail="Paystack webhook is missing transaction reference.",
+            )
+
+        result = await session.execute(
+            select(Payment).where(
+                Payment.provider == PaymentProviderType.PAYSTACK,
+                Payment.provider_reference == provider_reference,
+            )
+        )
+
+        payment = result.scalar_one_or_none()
+
+        if payment is None:
+            # Do not cause Paystack retries for an event that isn't ours.
+            return None
+
+        # Idempotency: Paystack may retry webhook delivery.
+        if payment.status == PaymentStatus.SUCCESSFUL:
+            return payment
+
+        if payment.status != PaymentStatus.PENDING:
+            return payment
+
+        if data.get("status") != "success":
+            return payment
+
+        webhook_amount = data.get("amount")
+
+        if webhook_amount is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Paystack webhook is missing amount.",
+            )
+
+        paid_amount = (
+            Decimal(str(webhook_amount)) / Decimal("100")
+        )
+
+        if paid_amount != payment.amount:
+            raise HTTPException(
+                status_code=400,
+                detail="Paystack payment amount mismatch.",
+            )
+
+        if data.get("currency") != settings.PAYSTACK_CURRENCY:
+            raise HTTPException(
+                status_code=400,
+                detail="Paystack payment currency mismatch.",
+            )
+
+        payment.provider_reference = provider_reference
+        payment.status = PaymentStatus.SUCCESSFUL
+        payment.completed_at = datetime.now(UTC)
+
+        await session.flush()
+
+        await self._execute_success_action(
+            payment=payment,
+            session=session,
+        )
+
+        return payment

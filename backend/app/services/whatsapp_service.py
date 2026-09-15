@@ -1,9 +1,8 @@
 from sqlalchemy import select
 
-from app.database.models.user import User
-
 from app.core.enums import AgentType
 from app.database.models.draft_reply import DraftReply
+from app.database.models.user import User
 from app.database.models.whatsapp_conversation import (
     MessageDirection,
     MessageType,
@@ -157,9 +156,10 @@ class WhatsAppService:
         conversation = result.scalar_one_or_none()
 
         user_result = await session.execute(
-            select(User.id).where(User.phone == customer_phone)
+            select(User).where(User.phone == customer_phone)
         )
-        user_id = user_result.scalar_one_or_none()
+        user = user_result.scalar_one_or_none()
+        user_id = user.id if user is not None else None
 
         if conversation is None:
             conversation = WhatsAppConversation(

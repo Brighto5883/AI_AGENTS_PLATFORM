@@ -23,7 +23,7 @@ class ListingImageService:
         image_processor: ImageProcessor,
         max_images: int,
         url_expiration_seconds: int,
-        image_scanner: ImageContactScanner,
+        image_scanner: ImageContactScanner | None,
     ) -> None:
         self.image_storage = image_storage
         self.image_processor = image_processor
@@ -31,7 +31,6 @@ class ListingImageService:
         self.url_expiration_seconds = url_expiration_seconds
         self.image_scanner = image_scanner
 
-# ==================================================================================
     async def create_images(
         self,
         *,
@@ -40,7 +39,6 @@ class ListingImageService:
         session: AsyncSession,
         scan_for_contact: bool = False,
     ) -> tuple[list[ListingImage], list[str]]:
-
         if len(uploads) > self.max_images:
             raise HTTPException(
                 status_code=400,
@@ -55,18 +53,10 @@ class ListingImageService:
 
         try:
             for display_order, upload in enumerate(uploads):
-
-                if scan_for_contact:
-                    scan_result = self.image_scanner.scan(upload.file)
-                    if not scan_result["passed"]:
-                        raise HTTPException(
-                            status_code=400,
-                            detail={
-                                "message": "Image contains prohibited contact information.",
-                                "reason": scan_result["reason"],
-                                "flagged": scan_result["flagged"],
-                            },
-                        )
+                self._scan_for_contact_if_required(
+                    upload=upload,
+                    scan_for_contact=scan_for_contact,
+                )
 
                 processed = await self.image_processor.process(upload)
 
@@ -99,20 +89,16 @@ class ListingImageService:
             return images, stored_keys
 
         except InvalidImageError as exc:
-
             await self._cleanup_storage(stored_keys)
-
             raise HTTPException(
                 status_code=400,
                 detail=str(exc),
             ) from exc
 
         except Exception:
-            
             await self._cleanup_storage(stored_keys)
             raise
 
-# ==================================================================================
     async def add_images(
         self,
         *,
@@ -154,17 +140,10 @@ class ListingImageService:
 
         try:
             for index, upload in enumerate(uploads):
-                if scan_for_contact:
-                    scan_result = self.image_scanner.scan(upload.file)
-                    if not scan_result["passed"]:
-                        raise HTTPException(
-                            status_code=400,
-                            detail={
-                                "message": "Image contains prohibited contact information.",
-                                "reason": scan_result["reason"],
-                                "flagged": scan_result["flagged"],
-                            },
-                        )
+                self._scan_for_contact_if_required(
+                    upload=upload,
+                    scan_for_contact=scan_for_contact,
+                )
 
                 processed = await self.image_processor.process(upload)
 
@@ -200,7 +179,6 @@ class ListingImageService:
 
         except InvalidImageError as exc:
             await self._cleanup_storage(stored_keys)
-
             raise HTTPException(
                 status_code=400,
                 detail=str(exc),
@@ -210,7 +188,35 @@ class ListingImageService:
             await self._cleanup_storage(stored_keys)
             raise
 
-# ==================================================================================
+    def _scan_for_contact_if_required(
+        self,
+        *,
+        upload: ImageUpload,
+        scan_for_contact: bool,
+    ) -> None:
+        if not scan_for_contact:
+            return
+
+        if self.image_scanner is None:
+            raise HTTPException(
+                status_code=500,
+                detail="Image contact scanning is not configured.",
+            )
+
+        scan_result = self.image_scanner.scan(upload.file)
+
+        if not scan_result["passed"]:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "message": (
+                        "Image contains prohibited contact information."
+                    ),
+                    "reason": scan_result["reason"],
+                    "flagged": scan_result["flagged"],
+                },
+            )
+
     async def get_image_url(
         self,
         *,
@@ -221,7 +227,6 @@ class ListingImageService:
             expires_in=self.url_expiration_seconds,
         )
 
-
     async def _cleanup_storage(
         self,
         storage_keys: Sequence[str],
@@ -231,7 +236,6 @@ class ListingImageService:
                 storage_key=storage_key,
             )
 
-# ==================================================================================
     async def get_storage_keys(
         self,
         *,
@@ -247,7 +251,6 @@ class ListingImageService:
 
         return list(result.scalars().all())
 
-# ==================================================================================
     async def delete_image(
         self,
         *,
@@ -293,15 +296,8 @@ class ListingImageService:
                 storage_key=storage_key,
             )
         except Exception:
-            # The database deletion has already succeeded.
-            # Storage cleanup failure must not make the client
-            # believe that the database operation failed.
-            #
-            # This should eventually be connected to application
-            # logging/monitoring or a background cleanup mechanism.
             return
 
-# ==================================================================================
     async def delete_storage_objects(
         self,
         *,
@@ -313,9 +309,4 @@ class ListingImageService:
                     storage_key=storage_key,
                 )
             except Exception:
-                # Database deletion has already succeeded.
-                # Storage cleanup failure should be logged/monitored
-                # and retried rather than failing the completed
-                # database operation.
                 continue
-

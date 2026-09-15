@@ -1,3 +1,6 @@
+from decimal import Decimal
+
+
 def get_listing_fee(category: str, amount: Decimal | None) -> Decimal:
     # Listing pricing is configured as a per-item fee. The category/amount
     # arguments are retained so future tiered pricing can be introduced

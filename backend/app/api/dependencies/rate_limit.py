@@ -32,7 +32,7 @@ async def enforce_rate_limit(user=Depends(current_active_user)):  # noqa: B008
 
     except HTTPException:
         raise  # this is a real, intentional rejection — let it propagate
-    except Exception as e:
+    except Exception:
         # Redis itself failed (timeout, connection refused, etc.) — fail open,
         # never let infrastructure trouble block real traffic.
         logger.warning("Redis error in rate limiter; allowing request through", exc_info=True)
@@ -66,7 +66,7 @@ async def wait_for_rate_limit_slot(
 
             await client.decr(key)  # don't consume a slot for a failed attempt
 
-        except Exception as e:
+        except Exception:
             # Redis itself failed — fail open, don't block message processing
             # over an infrastructure hiccup.
             logger.warning("Redis error during rate-limit wait; allowing message through", exc_info=True)
