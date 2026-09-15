@@ -11,11 +11,14 @@ from app.config.settings import settings
 
 # --- Our additions: make Alembic aware of the actual app ---
 from app.database.base import Base
+from app.database.url import get_async_database_url
 
 config = context.config
 
 # Override the placeholder URL in alembic.ini with the real one from settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+config.set_main_option(
+    "sqlalchemy.url", str(get_async_database_url(settings.DATABASE_URL))
+)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
