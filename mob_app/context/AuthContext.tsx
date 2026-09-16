@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { getToken, saveToken, removeToken } from "@/services/tokenService";
 import { getCurrentUser } from "@/services/authService";
 import { Alert } from "react-native";
+import { isUserFriendlyNetworkError } from "@/services/api";
 import { addUnauthorizedListener, resetUnauthorizedState } from "@/services/authEvents";
 import type { AuthUser } from "@/types/auth";
 
@@ -50,6 +51,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await loadUser();
         } catch (error) {
           console.error("Failed to load user profile:", error);
+
+          // A weak/offline connection must never turn a valid stored JWT
+          // into a logout. Only an actual authenticated API failure should
+          // invalidate the session here.
+          if (isUserFriendlyNetworkError(error)) {
+            setToken(storedToken);
+            return;
+          }
+
           await removeToken();
           setToken(null);
           setUser(null);

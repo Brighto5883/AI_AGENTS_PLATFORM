@@ -41,6 +41,8 @@ export type Listing = {
   needs_review: boolean;
   review_reason: string | null;
   created_at: string;
+  sold_at: string | null;
+  scheduled_deletion_at: string | null;
   contact_unlocked: boolean;
   images: ListingImage[];
   seller: Contactable;
@@ -76,6 +78,8 @@ export interface WantedPost {
   budget: string | null;
   is_open: boolean;
   created_at: string;
+  sold_at: string | null;
+  scheduled_deletion_at: string | null;
   contact_unlocked: boolean;
   requester: Contactable;
 }

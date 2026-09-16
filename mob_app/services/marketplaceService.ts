@@ -1,6 +1,6 @@
 import { Platform } from "react-native";
 import { File as ExpoFile } from "expo-file-system";
-import { apiFetch } from "@/services/api";
+import { apiFetch, getApiErrorMessage } from "@/services/api";
 import type { 
   Listing, ListingFilters, ListingsResponse,
   WantedPost, WantedPostCreateInput,
@@ -8,6 +8,26 @@ import type {
 
 
       
+const LISTINGS_CACHE_TTL_MS = 30_000;
+const WANTED_CACHE_TTL_MS = 30_000;
+
+type ListingsCacheEntry = {
+  value: ListingsResponse;
+  expiresAt: number;
+};
+
+let listingsCache = new Map<string, ListingsCacheEntry>();
+let wantedCache: { value: WantedPost[]; expiresAt: number } | null = null;
+
+function listingsCacheKey(filters: ListingFilters): string {
+  return JSON.stringify(filters);
+}
+
+export function invalidateMarketplaceCache(): void {
+  listingsCache.clear();
+  wantedCache = null;
+}
+
 //====================================================================================
 type CreateListingInput = {
   title: string;
@@ -68,7 +88,9 @@ export async function createListing(
     );
   }
 
-  return response.json();
+  const value = await response.json() as Listing;
+  invalidateMarketplaceCache();
+  return value;
 }
 //=========================================================================================
 export async function getListings(
@@ -105,6 +127,12 @@ export async function getListings(
   }
 
   const query = params.toString();
+  const key = listingsCacheKey(filters);
+  const cached = listingsCache.get(key);
+
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.value;
+  }
 
   const response = await apiFetch(
     `/marketplace/listings/${query ? `?${query}` : ""}`, 
@@ -115,11 +143,21 @@ export async function getListings(
 
   if (!response.ok) {
     throw new Error(
-      `Failed to fetch marketplace listings: ${response.status}`
+      await getApiErrorMessage(
+        response,
+        "We couldn't load the marketplace right now.",
+      ),
     );
   }
 
-  return response.json();
+  const value = (await response.json()) as ListingsResponse;
+
+  listingsCache.set(key, {
+    value,
+    expiresAt: Date.now() + LISTINGS_CACHE_TTL_MS,
+  });
+
+  return value;
 }
 // ===================================================================================
 export async function getListing(
@@ -134,7 +172,10 @@ export async function getListing(
 
   if (!response.ok) {
     throw new Error(
-      `Failed to fetch listing: ${response.status}`
+      await getApiErrorMessage(
+        response,
+        "We couldn't load this listing.",
+      ),
     );
   }
 
@@ -146,7 +187,12 @@ export async function getMyListings(): Promise<Listing[]> {
   const response = await apiFetch("/marketplace/listings/my-listings");
 
   if (!response.ok) {
-    throw new Error("Failed to fetch your listings.");
+    throw new Error(
+      await getApiErrorMessage(
+        response,
+        "We couldn't load your listings.",
+      ),
+    );
   }
 
   return response.json();
@@ -174,20 +220,19 @@ export async function updateListing(
   );
 
   if (!response.ok) {
-    const errorBody = await response.text();
-
-    console.error(
-      "Update listing failed:",
-      response.status,
-      errorBody,
+    const message = await getApiErrorMessage(
+      response,
+      "We couldn't update the listing.",
     );
 
-    throw new Error(
-      `Failed to update listing: ${response.status} ${errorBody}`,
-    );
+    console.error("Update listing failed:", response.status, message);
+
+    throw new Error(message);
   }
 
-  return response.json();
+  const value = await response.json() as Listing;
+  invalidateMarketplaceCache();
+  return value;
 }
 
 //====================================================================================
@@ -229,20 +274,19 @@ export async function addListingImages(
   );
 
   if (!response.ok) {
-    const errorBody = await response.text();
-
-    console.error(
-      "Add listing images failed:",
-      response.status,
-      errorBody,
+    const message = await getApiErrorMessage(
+      response,
+      "We couldn't upload the photos.",
     );
 
-    throw new Error(
-      `Failed to add listing images: ${response.status} ${errorBody}`,
-    );
+    console.error("Add listing images failed:", response.status, message);
+
+    throw new Error(message);
   }
 
-  return response.json();
+  const value = await response.json() as Listing;
+  invalidateMarketplaceCache();
+  return value;
 }
 
 //====================================================================================
@@ -258,18 +302,21 @@ export async function deleteListingImage(
   );
 
   if (!response.ok) {
-    const errorBody = await response.text();
+    const message = await getApiErrorMessage(
+      response,
+      "We couldn't delete that photo.",
+    );
 
     console.error(
       "Delete listing image failed:",
       response.status,
-      errorBody,
+      message,
     );
 
-    throw new Error(
-      `Failed to delete listing image: ${response.status} ${errorBody}`,
-    );
+    throw new Error(message);
   }
+
+  invalidateMarketplaceCache();
 }
 
 //====================================================================================
@@ -284,10 +331,17 @@ export async function markListingSold(
   );
 
   if (!response.ok) {
-    throw new Error("Failed to mark listing as sold.");
+    throw new Error(
+      await getApiErrorMessage(
+        response,
+        "We couldn't mark this listing as sold.",
+      ),
+    );
   }
 
-  return response.json();
+  const value = await response.json();
+  invalidateMarketplaceCache();
+  return value;
 }
 
 //====================================================================================
@@ -302,8 +356,15 @@ export async function deleteListing(
   );
 
   if (!response.ok) {
-    throw new Error("Failed to delete listing.");
+    throw new Error(
+      await getApiErrorMessage(
+        response,
+        "We couldn't delete this listing.",
+      ),
+    );
   }
+
+  invalidateMarketplaceCache();
 }
 
 //====================================================================================
@@ -329,22 +390,52 @@ export async function createWantedPost(
 
 
   if (!response.ok) {
-    throw new Error(responseText);
+    throw new Error(
+      await getApiErrorMessage(
+        new Response(responseText, {
+          status: response.status,
+          headers: { "Content-Type": "application/json" },
+        }),
+        "We couldn't create your request.",
+      ),
+    );
   }
 
-  return JSON.parse(responseText);
+  const value = JSON.parse(responseText) as WantedPost;
+  invalidateMarketplaceCache();
+  return value;
 }
 
 //====================================================================================
 export async function getWantedPosts(): Promise<WantedPost[]> {
+  if (wantedCache && wantedCache.expiresAt > Date.now()) {
+    return wantedCache.value;
+  }
+
   const response = await apiFetch(
     `/marketplace/wanted/`,
     {
       method: "GET",
-    }
+    },
   );
 
-  return response.json();
+  if (!response.ok) {
+    throw new Error(
+      await getApiErrorMessage(
+        response,
+        "We couldn't load wanted posts right now.",
+      ),
+    );
+  }
+
+  const value = (await response.json()) as WantedPost[];
+
+  wantedCache = {
+    value,
+    expiresAt: Date.now() + WANTED_CACHE_TTL_MS,
+  };
+
+  return value;
 }
 
 //====================================================================================
@@ -356,7 +447,16 @@ export async function getWantedPost(wantedId: string): Promise<WantedPost> {
     }
   );
 
-  return response.json()
+  if (!response.ok) {
+    throw new Error(
+      await getApiErrorMessage(
+        response,
+        "We couldn't load this wanted post.",
+      ),
+    );
+  }
+
+  return response.json();
 }
 
 //====================================================================================
@@ -364,7 +464,12 @@ export async function getMyWantedPosts(): Promise<WantedPost[]> {
   const response = await apiFetch("/marketplace/wanted/my-posts");
 
   if (!response.ok) {
-    throw new Error("Failed to fetch your wanted posts.");
+    throw new Error(
+      await getApiErrorMessage(
+        response,
+        "We couldn't load your wanted posts.",
+      ),
+    );
   }
 
   return response.json();
@@ -414,7 +519,9 @@ export async function updateWantedPost(
     );
   }
 
-  return response.json();
+  const value = await response.json();
+  invalidateMarketplaceCache();
+  return value;
 }
 
 
@@ -430,10 +537,17 @@ export async function markWantedPostFulfilled(
   );
 
   if (!response.ok) {
-    throw new Error("Failed to mark wanted post as fulfilled.");
+    throw new Error(
+      await getApiErrorMessage(
+        response,
+        "We couldn't mark this request as fulfilled.",
+      ),
+    );
   }
 
-  return response.json();
+  const value = await response.json();
+  invalidateMarketplaceCache();
+  return value;
 }
 
 //====================================================================================
@@ -457,9 +571,17 @@ export async function deleteWantedPost(
     );
 
     throw new Error(
-      `Failed to delete wanted post: ${response.status} ${errorBody}`,
+      await getApiErrorMessage(
+        new Response(errorBody, {
+          status: response.status,
+          headers: { "Content-Type": "application/json" },
+        }),
+        "We couldn't delete this request.",
+      ),
     );
   }
+
+  invalidateMarketplaceCache();
 }
 
 //====================================================================================

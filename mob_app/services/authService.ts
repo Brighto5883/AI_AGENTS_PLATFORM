@@ -1,9 +1,9 @@
-import { apiFetch } from '@/services/api';
-import type { AuthUser } from "@/types/auth";
-import type { LoginRequest, LoginResponse } from "@/types/auth";
-import { env } from '@/config/env';
-
-
+import {
+  apiFetch,
+  getApiErrorMessage,
+  publicApiFetch,
+} from "@/services/api";
+import type { AuthUser, LoginRequest, LoginResponse } from "@/types/auth";
 
 export async function registerUser({
   email,
@@ -14,7 +14,7 @@ export async function registerUser({
   password: string;
   phone?: string;
 }) {
-  const response = await fetch(`${env.BACKEND_URL}/auth/register`, {
+  const response = await publicApiFetch("/auth/register", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -22,29 +22,28 @@ export async function registerUser({
     body: JSON.stringify({
       email,
       password,
-      phone: phone || undefined
+      phone: phone || undefined,
     }),
   });
 
   if (!response.ok) {
-    const error = await response.json();
-
-    throw new Error(error.detail ?? "Registration failed");
+    throw new Error(
+      await getApiErrorMessage(response, "Registration failed. Please try again."),
+    );
   }
 
   return response.json();
 }
 
-//====================================================================================
 export async function loginUser(
-  request: LoginRequest
+  request: LoginRequest,
 ): Promise<LoginResponse> {
   const form = new URLSearchParams();
 
   form.append("username", request.username);
   form.append("password", request.password);
 
-  const response = await fetch(`${env.BACKEND_URL}/auth/jwt/login`, {
+  const response = await publicApiFetch("/auth/jwt/login", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -53,15 +52,17 @@ export async function loginUser(
   });
 
   if (!response.ok) {
-    const error = await response.json();
-
-    throw new Error(error.detail ?? "Login failed");
+    throw new Error(
+      await getApiErrorMessage(
+        response,
+        "Login failed. Check your email and password.",
+      ),
+    );
   }
 
   return response.json();
 }
 
-//====================================================================================
 export async function resetPassword({
   email,
   newPassword,
@@ -69,31 +70,39 @@ export async function resetPassword({
   email: string;
   newPassword: string;
 }) {
-  const response = await fetch(`${env.BACKEND_URL}/auth/password-reset`, {
+  const response = await publicApiFetch("/auth/password-reset", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, new_password: newPassword }),
+    body: JSON.stringify({
+      email,
+      new_password: newPassword,
+    }),
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail ?? "Password reset failed");
+    throw new Error(
+      await getApiErrorMessage(
+        response,
+        "Password reset failed. Please try again.",
+      ),
+    );
   }
+
   return response.json();
 }
 
-//====================================================================================
 export async function getCurrentUser(): Promise<AuthUser> {
   const response = await apiFetch("/users/me");
 
   if (!response.ok) {
-    throw new Error("Failed to load profile");
+    throw new Error(
+      await getApiErrorMessage(response, "Failed to load your profile."),
+    );
   }
 
   return response.json();
 }
 
-//====================================================================================
 export async function updateUserProfile(data: {
   phone?: string;
   name?: string;
@@ -105,8 +114,12 @@ export async function updateUserProfile(data: {
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail ?? "Failed to update profile");
+    throw new Error(
+      await getApiErrorMessage(
+        response,
+        "Failed to update your profile.",
+      ),
+    );
   }
 
   return response.json();

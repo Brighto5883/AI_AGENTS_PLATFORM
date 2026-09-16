@@ -81,6 +81,8 @@ export default function Login() {
         onChangeText={setEmail}
         placeholder="Email"
         autoCapitalize="none"
+        autoComplete="username"
+        textContentType="username"
         keyboardType="email-address"
         className="mb-2 rounded border p-4"
       />
@@ -95,6 +97,9 @@ export default function Login() {
         value={password}
         onChangeText={setPassword}
         placeholder="Password"
+        autoComplete="current-password"
+        textContentType="password"
+        importantForAutofill="yes"
         secureTextEntry
         className="mb-2 rounded border p-4"
       />

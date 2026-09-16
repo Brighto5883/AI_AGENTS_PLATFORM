@@ -77,6 +77,8 @@ export default function Register() {
         onChangeText={setEmail}
         placeholder="Email"
         autoCapitalize="none"
+        autoComplete="username"
+        textContentType="username"
         keyboardType="email-address"
         className="mb-2 rounded border p-4"
       />
@@ -91,6 +93,9 @@ export default function Register() {
         value={password}
         onChangeText={setPassword}
         placeholder="Password"
+        autoComplete="new-password"
+        textContentType="newPassword"
+        importantForAutofill="yes"
         secureTextEntry
         className="mb-2 rounded border p-4"
       />

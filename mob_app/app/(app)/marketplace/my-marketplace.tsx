@@ -125,7 +125,9 @@ export default function MyMarketplace() {
   const handleMarkSold = (listing: Listing) => {
     Alert.alert(
       "Mark as sold",
-      `Are you sure you want to mark "${listing.title}" as sold?`,
+      `Mark "${listing.title}" as sold?
+
+It will immediately disappear from the public marketplace. You can still manage it from My Marketplace for 7 days, after which it will be permanently deleted.`,
       [
         {
           text: "Cancel",
@@ -137,14 +139,29 @@ export default function MyMarketplace() {
             try {
               setProcessingId(listing.id);
 
-              await markListingSold(listing.id);
+              const updatedListing = await markListingSold(listing.id);
 
               setListings((current) =>
                 current.map((item) =>
                   item.id === listing.id
-                    ? { ...item, is_active: false }
+                    ? updatedListing
                     : item,
                 ),
+              );
+
+              const deletionDate = updatedListing.scheduled_deletion_at
+                ? new Date(
+                    updatedListing.scheduled_deletion_at,
+                  ).toLocaleDateString("en-KE", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })
+                : "7 days from now";
+
+              Alert.alert(
+                "Listing marked as sold",
+                `This listing is hidden from the marketplace and is scheduled for permanent deletion on ${deletionDate}.`,
               );
             } catch (err) {
               Alert.alert(

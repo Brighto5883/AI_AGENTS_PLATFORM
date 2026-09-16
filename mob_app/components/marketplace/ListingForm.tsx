@@ -149,7 +149,9 @@ export default function ListingForm({
       mediaTypes: ["images"],
       allowsMultipleSelection: true,
       selectionLimit: remainingSlots,
-      quality: 1,
+      // Smaller uploads matter significantly on congested campus networks.
+      // The backend still validates dimensions, format and file size.
+      quality: 0.72,
     });
 
     if (!result.canceled) {

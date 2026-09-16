@@ -9,6 +9,11 @@ export default function ListingsLayout() {
       />
 
       <Stack.Screen
+        name="[listingId]/edit"
+        options={{ headerShown: false }}
+      />
+
+      <Stack.Screen
         name="create-listing"
         options={{ headerShown: false }}
       />
