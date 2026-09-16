@@ -9,54 +9,38 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 import app.database.models  # noqa: F401 — registers every model onto Base.metadata
 from app.config.settings import settings
 
+# --- Our additions: make Alembic aware of the actual app ---
 from app.database.base import Base
 from app.database.url import get_async_database_url
 
 config = context.config
 
-# Build the real PostgreSQL async URL from the application's settings.
-#
-# IMPORTANT:
-# str(SQLAlchemy_URL) hides the password by rendering it as "***".
-# Alembic needs the actual password in order to establish the connection.
-#
-# Also escape "%" because Alembic uses ConfigParser internally and "%"
-# has special interpolation meaning.
-database_url = (
-    get_async_database_url(settings.DATABASE_URL)
-    .render_as_string(hide_password=False)
-    .replace("%", "%%")
+# Override the placeholder URL in alembic.ini with the real one from settings
+config.set_main_option(
+    "sqlalchemy.url", str(get_async_database_url(settings.DATABASE_URL))
 )
-
-config.set_main_option("sqlalchemy.url", database_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# This is what autogenerate diffs against.
+# This is what autogenerate diffs against — must NOT be None
 target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
     url = config.get_main_option("sqlalchemy.url")
-
     context.configure(
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
-
     with context.begin_transaction():
         context.run_migrations()
 
 
 def do_run_migrations(connection: Connection) -> None:
-    context.configure(
-        connection=connection,
-        target_metadata=target_metadata,
-    )
-
+    context.configure(connection=connection, target_metadata=target_metadata)
     with context.begin_transaction():
         context.run_migrations()
 
@@ -67,10 +51,8 @@ async def run_async_migrations() -> None:
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
-
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
-
     await connectable.dispose()
 
 
