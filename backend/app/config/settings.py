@@ -103,6 +103,10 @@ class Settings(BaseSettings):
     image_max_height: int = 4096
     image_max_count_per_listing: int = 5
 
+    # Sold listings remain recoverable/visible to the owner for this period
+    # before automatic permanent deletion.
+    marketplace_sold_retention_days: int = 7
+
     image_url_expiration_seconds: int = 3600
 
     # LOCAL IMAGE STORAGE

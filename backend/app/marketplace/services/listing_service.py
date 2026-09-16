@@ -1,4 +1,6 @@
+import asyncio
 from collections.abc import Sequence
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -166,7 +168,7 @@ class ListingService:
     ) -> list[Listing]:
 
         result = await session.execute(
-            stmt.options(selectinload(Listing.images), 
+            stmt.options(selectinload(Listing.images),
                             selectinload(Listing.seller))
         )
 
@@ -182,7 +184,7 @@ class ListingService:
 
         result = await session.execute(
             select(Listing)
-            .options(selectinload(Listing.images), 
+            .options(selectinload(Listing.images),
                         selectinload(Listing.seller))
             .where(Listing.id == listing_id)
         )
@@ -216,23 +218,24 @@ class ListingService:
         session: AsyncSession | None = None,
     ) -> ListingResponse:
 
-        images = []
-
-        for image in listing.images:
-            url = await self.listing_image_service.get_image_url(
-                image=image,
+        image_urls = await asyncio.gather(
+            *(
+                self.listing_image_service.get_image_url(image=image)
+                for image in listing.images
             )
+        )
 
-            images.append(
-                ListingImageResponse(
-                    id=image.id,
-                    original_filename=image.original_filename,
-                    content_type=image.content_type,
-                    file_size=image.file_size,
-                    display_order=image.display_order,
-                    url=url,
-                )
+        images = [
+            ListingImageResponse(
+                id=image.id,
+                original_filename=image.original_filename,
+                content_type=image.content_type,
+                file_size=image.file_size,
+                display_order=image.display_order,
+                url=url,
             )
+            for image, url in zip(listing.images, image_urls, strict=True)
+        ]
 
         contact_unlocked = await self._is_contact_unlocked(
             listing=listing,
@@ -262,6 +265,8 @@ class ListingService:
             images=images,
             seller=seller_contact,
             contact_unlocked=contact_unlocked,
+            sold_at = listing.sold_at,
+            scheduled_deletion_at = listing.scheduled_deletion_at,
         )
 
 # ==================================================================================
@@ -314,7 +319,7 @@ class ListingService:
 
         return list(result.scalars().all())
 
-# ==================================================================================       
+# ==================================================================================
     async def mark_listing_sold(
         self,
         listing_id: UUID,
@@ -332,12 +337,56 @@ class ListingService:
                 detail="You do not own this listing.",
             )
 
+        now = datetime.now(UTC)
+
         listing.is_active = False
+        listing.sold_at = now
+        listing.scheduled_deletion_at = now + timedelta(days=7)
 
         await session.commit()
 
         return listing
-        
+
+# ==================================================================================
+    async def purge_expired_sold_listings(
+        self,
+        session: AsyncSession,
+    ) -> int:
+        now = datetime.now(UTC)
+
+        result = await session.execute(
+            select(Listing).where(
+                Listing.is_active.is_(False),
+                Listing.sold_at.is_not(None),
+                Listing.scheduled_deletion_at.is_not(None),
+                Listing.scheduled_deletion_at <= now,
+            )
+        )
+
+        listings = list(result.scalars().all())
+
+        if not listings:
+            return 0
+
+        storage_keys: list[str] = []
+
+        for listing in listings:
+            keys = await self.listing_image_service.get_storage_keys(
+                listing_id=listing.id,
+                session=session,
+            )
+            storage_keys.extend(keys)
+
+            await session.delete(listing)
+
+        await session.commit()
+
+        if storage_keys:
+            await self.listing_image_service.delete_storage_objects(
+                storage_keys=storage_keys,
+            )
+
+        return len(listings)
 # ==================================================================================
     async def delete_listing(
         self,

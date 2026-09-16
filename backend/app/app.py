@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
+import asyncio
+import logging
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -12,22 +14,49 @@ from app.api.routes import feedback, health, payments, paystack_webhook
 from app.api.routes.auth import register_auth_routes
 from app.config.settings import settings
 from app.core.container import container
-from app.marketplace.routes import (
+from app.database.session import get_session_context
+from app.marketplace.routes import (  # noqa: E402
     billing,
     listings,
     transactions,
     wanted_posts,
 )
 
+logger = logging.getLogger(__name__)
+
+
+async def _marketplace_cleanup_loop() -> None:
+    while True:
+        try:
+            async with get_session_context() as session:
+                deleted = await container.listing_service.purge_expired_sold_listings(
+                    session,
+                )
+                if deleted:
+                    logger.info(
+                        "Purged expired sold listings",
+                        extra={"count": deleted},
+                    )
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Marketplace cleanup cycle failed")
+
+        await asyncio.sleep(3600)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     if settings.MARKETPLACE_ONLY:
         await container.initialize()
+        cleanup_task = asyncio.create_task(_marketplace_cleanup_loop())
 
         try:
             yield
         finally:
+            cleanup_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await cleanup_task
             await container.shutdown()
 
         return

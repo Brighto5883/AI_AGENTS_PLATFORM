@@ -80,6 +80,17 @@ class Listing(Base):
         nullable=False,
     )
 
+    sold_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    scheduled_deletion_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        index=True,
+    )
+
     seller = relationship(
         "User",
         back_populates="listings",

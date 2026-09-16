@@ -79,6 +79,8 @@ class ListingResponse(BaseModel):
     needs_review: bool
     review_reason: str | None
     created_at: datetime
+    sold_at: datetime | None
+    scheduled_deletion_at: datetime | None
     images: list[ListingImageResponse]
     seller: ContactablePublic
     contact_unlocked: bool

@@ -1,5 +1,7 @@
+import asyncio
 import uuid
 from collections.abc import Sequence
+from typing import cast
 
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -13,6 +15,8 @@ from app.marketplace.media.image_processing import (
 )
 from app.marketplace.media.image_storage import ImageStorage
 from app.marketplace.moderation.image_scanner import ImageContactScanner
+
+StoredUpload = tuple[ImageUpload, str, str, int]
 
 
 class ListingImageService:
@@ -52,12 +56,15 @@ class ListingImageService:
         stored_keys: list[str] = []
 
         try:
-            for display_order, upload in enumerate(uploads):
+            for upload in uploads:
                 self._scan_for_contact_if_required(
                     upload=upload,
                     scan_for_contact=scan_for_contact,
                 )
 
+            async def process_and_store(
+                upload: ImageUpload,
+            ) -> tuple[ImageUpload, str, str, int]:
                 processed = await self.image_processor.process(upload)
 
                 storage_key = (
@@ -72,14 +79,49 @@ class ListingImageService:
                     content_type=processed.content_type,
                 )
 
+                return (
+                    upload,
+                    storage_key,
+                    processed.content_type,
+                    processed.file_size,
+                )
+
+            # Image processing and R2 uploads are independent. Running them
+            # concurrently removes the previous one-image-at-a-time wait.
+            results = await asyncio.gather(
+                *(process_and_store(upload) for upload in uploads),
+                return_exceptions=True,
+            )
+
+            successful_results: list[StoredUpload] = []
+            failures: list[BaseException] = []
+
+            for result in results:
+                if isinstance(result, BaseException):
+                    failures.append(result)
+                else:
+                    successful_results.append(cast(StoredUpload, result))
+
+            if failures:
+                await self._cleanup_storage(
+                    [result[1] for result in successful_results],
+                )
+                raise failures[0]
+
+            for display_order, (
+                upload,
+                storage_key,
+                content_type,
+                file_size,
+            ) in enumerate(successful_results):
                 stored_keys.append(storage_key)
 
                 image = ListingImage(
                     listing_id=listing_id,
                     storage_key=storage_key,
                     original_filename=upload.original_filename,
-                    content_type=processed.content_type,
-                    file_size=processed.file_size,
+                    content_type=content_type,
+                    file_size=file_size,
                     display_order=display_order,
                 )
 
@@ -139,12 +181,15 @@ class ListingImageService:
         stored_keys: list[str] = []
 
         try:
-            for index, upload in enumerate(uploads):
+            for upload in uploads:
                 self._scan_for_contact_if_required(
                     upload=upload,
                     scan_for_contact=scan_for_contact,
                 )
 
+            async def process_and_store(
+                upload: ImageUpload,
+            ) -> tuple[ImageUpload, str, str, int]:
                 processed = await self.image_processor.process(upload)
 
                 storage_key = (
@@ -159,14 +204,47 @@ class ListingImageService:
                     content_type=processed.content_type,
                 )
 
+                return (
+                    upload,
+                    storage_key,
+                    processed.content_type,
+                    processed.file_size,
+                )
+
+            results = await asyncio.gather(
+                *(process_and_store(upload) for upload in uploads),
+                return_exceptions=True,
+            )
+
+            successful_results: list[StoredUpload] = []
+            failures: list[BaseException] = []
+
+            for result in results:
+                if isinstance(result, BaseException):
+                    failures.append(result)
+                else:
+                    successful_results.append(cast(StoredUpload, result))
+
+            if failures:
+                await self._cleanup_storage(
+                    [result[1] for result in successful_results],
+                )
+                raise failures[0]
+
+            for index, (
+                upload,
+                storage_key,
+                content_type,
+                file_size,
+            ) in enumerate(successful_results):
                 stored_keys.append(storage_key)
 
                 image = ListingImage(
                     listing_id=listing_id,
                     storage_key=storage_key,
                     original_filename=upload.original_filename,
-                    content_type=processed.content_type,
-                    file_size=processed.file_size,
+                    content_type=content_type,
+                    file_size=file_size,
                     display_order=next_display_order + index,
                 )
 
