@@ -6,6 +6,7 @@ import { Pressable, ScrollView, Text, useWindowDimensions, View } from "react-na
 
 import FeedbackButton from "@/components/feedback/feedbackButton";
 import FeedbackModal from "@/components/feedback/FeedbackModal";
+import SupportContacts from "@/components/SupportContacts";
 import ServiceCard from "@/components/ServiceCard";
 import { services } from "@/config/services";
 import { getMarketplaceBillingInfo } from "@/services/marketplaceService";
@@ -151,8 +152,10 @@ export default function Home() {
             onClose={() => setDonationVisible(false)}
           />
 
-          {/* Feedback */}
-          <View className="mt-4 items-end">
+          {/* Support & Feedback */}
+          <View className="mt-4 flex-row items-center justify-end gap-2">
+            <SupportContacts compact />
+
             <FeedbackButton
               onPress={() => setFeedbackVisible(true)}
             />

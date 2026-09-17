@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useState } from "react";
 import { router } from "expo-router";
 import FeedbackButton from "@/components/feedback/feedbackButton";
+import SupportContacts from "@/components/SupportContacts";
 import FeedbackModal from "@/components/feedback/FeedbackModal";
 import ListingCard from "@/components/marketplace/ListingCard";
 import { getListings, getMarketplaceBillingInfo } from "@/services/marketplaceService";
@@ -471,6 +472,118 @@ export default function Marketplace() {
               </View>
             ) : null}
 
+
+        {/* ================================================================
+            Marketplace navigation
+        ================================================================= */}
+
+            <View className="mt-8">
+              <Text className="text-xl font-bold text-gray-950">
+                What would you like to do?
+              </Text>
+
+              <Text className="mt-1 text-sm leading-5 text-gray-500">
+                Quickly access the marketplace tools you need.
+              </Text>
+
+              <View
+                className="mt-4 flex-row flex-wrap"
+                style={{
+                  gap,
+                }}
+              >
+                {marketplaceActions.map((action) => (
+                  <Pressable
+                    key={action.title}
+                    onPress={() =>
+                      router.push(action.path)
+                    }
+                    className="min-h-31.5 rounded-2xl border border-gray-200 bg-white p-4"
+                    style={({ pressed }) => ({
+                      width: actionCardWidth,
+                      opacity: pressed ? 0.8 : 1,
+                      transform: [
+                        {
+                          scale: pressed ? 0.985 : 1,
+                        },
+                      ],
+                    })}
+                  >
+                    {/* Icon */}
+                    <View
+                      className="h-10 w-10 items-center justify-center rounded-xl"
+                      style={{
+                        backgroundColor:
+                          action.iconBackground,
+                      }}
+                    >
+                      <Ionicons
+                        name={action.icon}
+                        size={20}
+                        color={action.iconColor}
+                      />
+                    </View>
+
+                    {/* Title */}
+                    <Text className="mt-3 text-sm font-bold text-gray-950">
+                      {action.title}
+                    </Text>
+
+                    {/* Description */}
+                    <Text
+                      numberOfLines={2}
+                      className="mt-1 text-xs leading-4 text-gray-500"
+                    >
+                      {action.description}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+        {/* ================================================================
+            Inline error
+        ================================================================= */}
+
+            {error && listings.length > 0 && (
+              <View className="mt-5 rounded-xl bg-red-50 px-4 py-3">
+                <Text className="text-center text-sm font-medium text-red-600">
+                  {error}
+                </Text>
+              </View>
+            )}
+
+        {/* ================================================================
+            Feedback
+        ================================================================= */}
+
+            <View className="mt-6 rounded-2xl border border-gray-200 bg-white p-4">
+              <View className="flex-row items-center justify-between">
+                <View className="mr-4 flex-1">
+                  <Text className="text-sm font-bold text-gray-950">
+                    Something not right?
+                  </Text>
+
+                  <Text className="mt-1 text-xs leading-4 text-gray-500">
+                    Tell us about a marketplace problem or suggest an improvement.
+                  </Text>
+                </View>
+
+                <FeedbackButton
+                  label="Give feedback"
+                  onPress={() => setFeedbackVisible(true)}
+                />
+              </View>
+            </View>
+
+            <FeedbackModal
+              visible={feedbackVisible}
+              onClose={() => setFeedbackVisible(false)}
+              screen="marketplace"
+            />
+
+            <SupportContacts />
+
         {/* ================================================================
             Search
         ================================================================= */}
@@ -675,114 +788,6 @@ export default function Marketplace() {
               </View>
             )}
 
-        {/* ================================================================
-            Marketplace navigation
-        ================================================================= */}
-
-            <View className="mt-8">
-              <Text className="text-xl font-bold text-gray-950">
-                What would you like to do?
-              </Text>
-
-              <Text className="mt-1 text-sm leading-5 text-gray-500">
-                Quickly access the marketplace tools you need.
-              </Text>
-
-              <View
-                className="mt-4 flex-row flex-wrap"
-                style={{
-                  gap,
-                }}
-              >
-                {marketplaceActions.map((action) => (
-                  <Pressable
-                    key={action.title}
-                    onPress={() =>
-                      router.push(action.path)
-                    }
-                    className="min-h-31.5 rounded-2xl border border-gray-200 bg-white p-4"
-                    style={({ pressed }) => ({
-                      width: actionCardWidth,
-                      opacity: pressed ? 0.8 : 1,
-                      transform: [
-                        {
-                          scale: pressed ? 0.985 : 1,
-                        },
-                      ],
-                    })}
-                  >
-                    {/* Icon */}
-                    <View
-                      className="h-10 w-10 items-center justify-center rounded-xl"
-                      style={{
-                        backgroundColor:
-                          action.iconBackground,
-                      }}
-                    >
-                      <Ionicons
-                        name={action.icon}
-                        size={20}
-                        color={action.iconColor}
-                      />
-                    </View>
-
-                    {/* Title */}
-                    <Text className="mt-3 text-sm font-bold text-gray-950">
-                      {action.title}
-                    </Text>
-
-                    {/* Description */}
-                    <Text
-                      numberOfLines={2}
-                      className="mt-1 text-xs leading-4 text-gray-500"
-                    >
-                      {action.description}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-
-        {/* ================================================================
-            Inline error
-        ================================================================= */}
-
-            {error && listings.length > 0 && (
-              <View className="mt-5 rounded-xl bg-red-50 px-4 py-3">
-                <Text className="text-center text-sm font-medium text-red-600">
-                  {error}
-                </Text>
-              </View>
-            )}
-
-        {/* ================================================================
-            Feedback
-        ================================================================= */}
-
-            <View className="mt-6 rounded-2xl border border-gray-200 bg-white p-4">
-              <View className="flex-row items-center justify-between">
-                <View className="mr-4 flex-1">
-                  <Text className="text-sm font-bold text-gray-950">
-                    Something not right?
-                  </Text>
-
-                  <Text className="mt-1 text-xs leading-4 text-gray-500">
-                    Tell us about a marketplace problem or suggest an improvement.
-                  </Text>
-                </View>
-
-                <FeedbackButton
-                  label="Give feedback"
-                  onPress={() => setFeedbackVisible(true)}
-                />
-              </View>
-            </View>
-
-            <FeedbackModal
-              visible={feedbackVisible}
-              onClose={() => setFeedbackVisible(false)}
-              screen="marketplace"
-            />
 
         {/* ================================================================
             Listings heading
