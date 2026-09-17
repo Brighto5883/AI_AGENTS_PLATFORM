@@ -1,0 +1,11 @@
+.git/
+backend/
+frontend/
+node_modules/
+.expo/
+dist/
+build/
+*.log
+.env
+.env.*
+!.env.example
