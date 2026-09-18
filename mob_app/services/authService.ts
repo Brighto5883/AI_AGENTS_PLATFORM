@@ -5,6 +5,8 @@ import {
 } from "@/services/api";
 import type { AuthUser, LoginRequest, LoginResponse } from "@/types/auth";
 
+
+// ==================================================================================
 export async function registerUser({
   email,
   password,
@@ -35,6 +37,7 @@ export async function registerUser({
   return response.json();
 }
 
+// ==================================================================================
 export async function loginUser(
   request: LoginRequest,
 ): Promise<LoginResponse> {
@@ -63,6 +66,7 @@ export async function loginUser(
   return response.json();
 }
 
+// ==================================================================================
 export async function resetPassword({
   email,
   newPassword,
@@ -91,6 +95,7 @@ export async function resetPassword({
   return response.json();
 }
 
+// ==================================================================================
 export async function getCurrentUser(): Promise<AuthUser> {
   const response = await apiFetch("/users/me");
 
@@ -103,6 +108,7 @@ export async function getCurrentUser(): Promise<AuthUser> {
   return response.json();
 }
 
+// ==================================================================================
 export async function updateUserProfile(data: {
   phone?: string;
   name?: string;
@@ -123,4 +129,20 @@ export async function updateUserProfile(data: {
   }
 
   return response.json();
+}
+
+// ==================================================================================
+export async function deleteAccount(): Promise<void> {
+  const response = await apiFetch("/account", {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await getApiErrorMessage(
+        response,
+        "We couldn't delete your account. Please try again.",
+      ),
+    );
+  }
 }
