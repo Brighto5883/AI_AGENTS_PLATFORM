@@ -12,37 +12,37 @@ tmux kill-session -t "$SESSION" 2>/dev/null
 # ============================================================
 # CREATE THE TMUX SESSION
 # ============================================================
-# Create an initial empty session. It will be removed later
-# if no services are enabled.
 
 tmux new-session -d -s "$SESSION" -n "__placeholder"
 
 # ============================================================
 # SERVICES
-# ============================================================
 # Uncomment/comment any combination of services.
-# You do NOT need to worry about which service comes first.
 # ============================================================
 
-Infrastructure — PostgreSQL, Redis, etc.
-tmux new-window -t "$SESSION" -n infra \
-  "cd $PROJECT && docker compose up -d; zsh"
+# Infrastructure — PostgreSQL, Redis, etc.
+# tmux new-window -t "$SESSION" -n infra \
+#   "cd $PROJECT && docker compose up -d; zsh"
 
-Backend — local FastAPI server
-tmux new-window -t "$SESSION" -n backend \
-  "cd $PROJECT/backend && uv run python main.py"
+# Backend — local FastAPI server
+# tmux new-window -t "$SESSION" -n backend \
+#   "cd $PROJECT/backend && uv run python main.py"
 
 # Mobile — Expo React Native app
 tmux new-window -t "$SESSION" -n mobile \
-  "cd $PROJECT/mob_app && npx expo start --lan"
+  "cd $PROJECT/mob_app && npx expo start --lan --port 8081"
 
-# Web frontend — Vite
-tmux new-window -t "$SESSION" -n frontend \
-  "cd $PROJECT/frontend && npm run dev"
+# Web — Expo React Native Web
+tmux new-window -t "$SESSION" -n web \
+  "cd $PROJECT/mob_app && npx expo start --web --port 8082"
 
-# ngrok — expose web frontend externally
+# Standalone Vite frontend — no longer needed
+# tmux new-window -t "$SESSION" -n frontend \
+#   "cd $PROJECT/frontend && npm run dev"
+
+# ngrok — expose web externally
 # tmux new-window -t "$SESSION" -n ngrok \
-#   "ngrok http 5173"
+#   "ngrok http 8081"
 
 # ============================================================
 # REMOVE PLACEHOLDER

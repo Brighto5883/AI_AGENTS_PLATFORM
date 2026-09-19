@@ -89,7 +89,13 @@ class Settings(BaseSettings):
     PAYSTACK_CURRENCY: str = "KES"
 
     # Browser clients. Native mobile clients do not use CORS.
-    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173,http://localhost:8081"
+    CORS_ORIGINS: str = (
+    "http://localhost:3000,"
+    "http://localhost:5173,"
+    "http://localhost:8081,"
+    "http://localhost:8082,"
+    "http://10.10.1.246:8082"
+)
 
     # R2 IMAGE UPLOAD
     r2_endpoint_url: str
