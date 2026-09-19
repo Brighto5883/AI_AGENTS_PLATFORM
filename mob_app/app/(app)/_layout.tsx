@@ -1,5 +1,6 @@
 import { Redirect, Stack } from "expo-router";
 import { useAuth } from "@/context/AuthContext";
+import WebAppShell from "@/components/web/WebAppShell";
 
 export default function AppLayout() {
   const { isLoading, isAuthenticated } = useAuth();
@@ -12,5 +13,9 @@ export default function AppLayout() {
     return <Redirect href="/login" />;
   }
 
-  return <Stack screenOptions={{ headerShown: false }}/>;
+  return (
+    <WebAppShell>
+      <Stack screenOptions={{ headerShown: false }} />
+    </WebAppShell>
+  );
 }

@@ -1,23 +1,79 @@
 #!/usr/bin/env zsh
+
 SESSION="ai_agents_dev"
+PROJECT="$HOME/projects/AI_AGENTS_PLATFORM"
 
-tmux kill-session -t $SESSION 2>/dev/null
+# ============================================================
+# CLEAN UP EXISTING SESSION
+# ============================================================
 
-tmux new-session -d -s $SESSION -n infra "docker compose up -d; zsh"
-tmux new-window -t $SESSION -n backend "cd backend && uv run python main.py"
-tmux new-window -t $SESSION -n mobile "cd mob_app && npx expo start --lan"
-#tmux new-window -t $SESSION -n frontend "cd frontend && npm run dev"
-# tmux new-window -t $SESSION -n ngrok "ngrok http 5173"
+tmux kill-session -t "$SESSION" 2>/dev/null
+
+# ============================================================
+# CREATE THE TMUX SESSION
+# ============================================================
+# Create an initial empty session. It will be removed later
+# if no services are enabled.
+
+tmux new-session -d -s "$SESSION" -n "__placeholder"
+
+# ============================================================
+# SERVICES
+# ============================================================
+# Uncomment/comment any combination of services.
+# You do NOT need to worry about which service comes first.
+# ============================================================
+
+Infrastructure — PostgreSQL, Redis, etc.
+tmux new-window -t "$SESSION" -n infra \
+  "cd $PROJECT && docker compose up -d; zsh"
+
+Backend — local FastAPI server
+tmux new-window -t "$SESSION" -n backend \
+  "cd $PROJECT/backend && uv run python main.py"
+
+# Mobile — Expo React Native app
+tmux new-window -t "$SESSION" -n mobile \
+  "cd $PROJECT/mob_app && npx expo start --lan"
+
+# Web frontend — Vite
+tmux new-window -t "$SESSION" -n frontend \
+  "cd $PROJECT/frontend && npm run dev"
+
+# ngrok — expose web frontend externally
+# tmux new-window -t "$SESSION" -n ngrok \
+#   "ngrok http 5173"
+
+# ============================================================
+# REMOVE PLACEHOLDER
+# ============================================================
+
+tmux kill-window -t "$SESSION:__placeholder" 2>/dev/null
+
+# ============================================================
+# ATTACH
+# ============================================================
+
+tmux attach -t "$SESSION"
 
 
-tmux attach -t $SESSION
-
-# Starting tmux:                 chmod +x start-dev.sh
-#                                ./start-dev.sh
-
-# Getting it back
-# it wasn't removed:                tmux attach -t ai_agents_dev
-
-# Shutting everything down:       chmod +x stop-dev.sh
-
-#Killing sessions manually:       tmux kill-session -t session_name
+# ============================================================
+# COMMANDS
+# ============================================================
+#
+# Start development:
+#   ./start-dev.sh
+#
+# Reattach:
+#   tmux attach -t ai_agents_dev
+#
+# Kill session:
+#   tmux kill-session -t ai_agents_dev
+#
+# Make executable:
+#   chmod +x start-dev.sh
+#
+# Stop everything:
+#   ./stop-dev.sh
+#
+# ============================================================
