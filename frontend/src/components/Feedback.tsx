@@ -1,0 +1,10 @@
+import { useState } from "react";
+import { Modal } from "@/components/Common";
+import { submitFeedback } from "@/services/apiServices";
+
+export function Feedback({ screen }: { screen: string }) {
+  const [open, setOpen] = useState(false); const [category, setCategory] = useState("bug"); const [message, setMessage] = useState(""); const [saving, setSaving] = useState(false); const [done, setDone] = useState(false); const [error, setError] = useState("");
+  async function send() { if (!message.trim()) { setError("Please describe the issue or feedback."); return; } setSaving(true); setError(""); try { await submitFeedback(category, message.trim(), screen); setDone(true); setMessage(""); } catch (e) { setError(e instanceof Error ? e.message : "Couldn't send feedback."); } finally { setSaving(false); } }
+  return <><button className="button ghost small" onClick={() => { setOpen(true); setDone(false); }}>Feedback</button>{open && <Modal title="Help us improve Campus Hub" onClose={() => setOpen(false)}>{done ? <div className="success-box"><strong>Thanks for the feedback.</strong><p>Your feedback has been submitted.</p><button className="button dark" onClick={() => setOpen(false)}>Close</button></div> : <><FormSelect label="Category" value={category} onChange={setCategory} options={[["bug","Bug"],["feature","Feature request"],["payment","Payment"],["other","Other"]]}/><textarea className="textarea" placeholder="Tell us what happened..." value={message} onChange={e => setMessage(e.target.value)} rows={6}/>{error && <p className="form-error">{error}</p>}<button className="button dark full" disabled={saving} onClick={() => void send()}>{saving ? "Sending..." : "Send feedback"}</button></>}</Modal>}</>;
+}
+function FormSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (v:string)=>void; options: string[][] }) { return <label className="field"><span>{label}</span><select value={value} onChange={e=>onChange(e.target.value)}>{options.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>; }

@@ -1,16 +1,27 @@
-# React + Vite
+# Campus Hub Web Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the browser implementation of the current Campus Hub mobile experience. It is written in React + TypeScript + TSX and keeps the same backend API contracts used by the React Native app.
 
-Currently, two official plugins are available:
+## Quick start
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm install
+npm run dev
+```
 
-## React Compiler
+The Vite development server proxies `/api/*` to `http://localhost:8000` by default. For a deployed frontend, set `VITE_BACKEND_URL` to the public FastAPI origin, for example:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+VITE_BACKEND_URL=https://your-backend.example.com
+```
 
-## Expanding the ESLint configuration
+The backend must allow the website origin through its CORS configuration. No backend files are modified by this frontend implementation.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Validation
+
+```bash
+npm run lint
+npm run build
+```
+
+See `WEBSITE_GUIDE.md` for the full architecture and review guide.
