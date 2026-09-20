@@ -1,3 +1,4 @@
+import { useTransientError } from "@/hooks/useTransientError";
 
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useState } from "react";
@@ -105,7 +106,7 @@ const marketplaceActions: MarketplaceAction[] = [
     path: "/marketplace/wanted/create-wanted",
   },
   {
-    title: "VIEW MY POSTS",
+    title: "VIEW YOUR POSTS",
     description: "Manage all your listings posts here.",
     icon: "person-outline",
     iconColor: "#ea580c",

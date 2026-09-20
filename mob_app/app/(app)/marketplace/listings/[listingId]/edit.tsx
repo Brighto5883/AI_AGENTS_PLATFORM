@@ -1,3 +1,4 @@
+import { useTransientError } from "@/hooks/useTransientError";
 
 import { useCallback, useState } from "react";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
@@ -26,7 +27,7 @@ export default function EditListing() {
   const [listing, setListing] = useState<Listing | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useTransientError();
 
   const loadListing = useCallback(async () => {
     if (!listingId) {

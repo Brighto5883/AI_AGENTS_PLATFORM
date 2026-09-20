@@ -1,6 +1,17 @@
+import { useTransientError } from "@/hooks/useTransientError";
 import { useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { registerUser } from "@/services/authService";
+import { getUserFriendlyErrorMessage } from "@/utils/errorMessages";
 import { router } from "expo-router";
 
 export default function Register() {
@@ -8,7 +19,7 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const [error, setError] = useState("");
+  const [error, setError] = useTransientError();
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
@@ -54,10 +65,14 @@ export default function Register() {
 
       router.replace("/login");
     } catch (error) {
-      console.error("Registration failed:", error);
 
       if (error instanceof Error) {
-        setError(error.message);
+        setError(
+          getUserFriendlyErrorMessage(
+            error,
+            "Registration failed. Please check your details and try again.",
+          ),
+        );
       } else {
         setError("Registration failed.");
       }
@@ -67,69 +82,134 @@ export default function Register() {
   };
 
   return (
-    <View className="flex-1 justify-center bg-homepage p-6">
-      <Text className="mb-8 text-3xl font-bold">
-        Create Account
-      </Text>
-
-      <TextInput
-        value={email}
-        onChangeText={setEmail}
-        placeholder="Email"
-        autoCapitalize="none"
-        autoComplete="username"
-        textContentType="username"
-        keyboardType="email-address"
-        className="mb-2 rounded border p-4"
-      />
-
-      {emailError ? (
-        <Text className="mb-4 text-red-600">
-          {emailError}
-        </Text>
-      ) : null}
-
-      <TextInput
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Password"
-        autoComplete="new-password"
-        textContentType="newPassword"
-        importantForAutofill="yes"
-        secureTextEntry
-        className="mb-2 rounded border p-4"
-      />
-
-      {passwordError ? (
-        <Text className="mb-4 text-red-600">
-          {passwordError}
-        </Text>
-      ) : null}
-
-      {error ? (
-        <Text className="mb-4 text-red-600">
-          {error}
-        </Text>
-      ) : null}
-
-      <Pressable
-        onPress={handleRegister}
-        disabled={isLoading}
-        className="rounded bg-blue-600 p-4"
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      enabled={Platform.OS !== "web"}
+    >
+      <ScrollView
+        className="flex-1 bg-gray-50"
+        contentContainerClassName="flex-grow items-center justify-center px-5 py-10"
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingBottom: 40,
+        }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <Text className="text-center font-bold text-white">
-          {isLoading ? "Creating account..." : "Register"}
-        </Text>
-      </Pressable>
+        <View className="w-full max-w-xl">
+          <View className="mb-8 items-center">
+            <View className="mb-4 h-14 w-14 items-center justify-center rounded-2xl bg-gray-950">
+              <Text className="text-2xl text-white">✦</Text>
+            </View>
 
-      <Pressable
-        onPress={() => router.replace("/login")}
-        className="mt-4"
-      >
-        <Text className="text-center">
-          Already have an account? Login
-        </Text>
-      </Pressable>
-    </View>
+            <Text className="text-center text-3xl font-bold tracking-tight text-gray-950">
+              Welcome to Campus Hub
+            </Text>
+
+            <Text className="mt-3 max-w-md text-center text-base leading-6 text-gray-600">
+              Create your account and get access to a growing collection of
+              campus services, tools, and intelligent experiences.
+            </Text>
+          </View>
+
+          <View className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+            <Text className="mb-1 text-xl font-bold text-gray-950">
+              Create your account
+            </Text>
+
+            <Text className="mb-6 text-sm leading-5 text-gray-500">
+              It only takes a moment. You can explore the platform once you're
+              signed in.
+            </Text>
+
+            <Text className="mb-2 text-sm font-semibold text-gray-700">
+              Email
+            </Text>
+
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              placeholder="you@example.com"
+              placeholderTextColor="#9ca3af"
+              autoCapitalize="none"
+              autoComplete="username"
+              textContentType="username"
+              keyboardType="email-address"
+              className="mb-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-gray-900"
+            />
+
+            {emailError ? (
+              <Text className="mb-4 text-sm text-red-600">
+                {emailError}
+              </Text>
+            ) : null}
+
+            <Text className="mb-2 text-sm font-semibold text-gray-700">
+              Password
+            </Text>
+
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              placeholder="At least 8 characters"
+              placeholderTextColor="#9ca3af"
+              autoComplete="new-password"
+              textContentType="newPassword"
+              importantForAutofill="yes"
+              secureTextEntry
+              className="mb-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-gray-900"
+            />
+
+            {passwordError ? (
+              <Text className="mb-4 text-sm text-red-600">
+                {passwordError}
+              </Text>
+            ) : null}
+
+            {error ? (
+              <View className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3">
+                <Text className="text-sm leading-5 text-red-700">
+                  {error}
+                </Text>
+              </View>
+            ) : null}
+
+            <Pressable
+              onPress={handleRegister}
+              disabled={isLoading}
+              className={`rounded-xl px-4 py-3.5 ${
+                isLoading ? "bg-gray-400" : "bg-gray-950"
+              }`}
+            >
+              {isLoading ? (
+                <View className="flex-row items-center justify-center">
+                  <ActivityIndicator color="#ffffff" size="small" />
+                  <Text className="ml-2 font-bold text-white">
+                    Creating account...
+                  </Text>
+                </View>
+              ) : (
+                <Text className="text-center font-bold text-white">
+                  Create account
+                </Text>
+              )}
+            </Pressable>
+          </View>
+
+          <Pressable
+            onPress={() => router.replace("/login")}
+            className="mt-6"
+          >
+            <Text className="text-center text-sm text-gray-600">
+              Already have an account?{" "}
+              <Text className="font-bold text-gray-950">
+                Sign in
+              </Text>
+            </Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

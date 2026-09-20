@@ -1,3 +1,4 @@
+import { useTransientError } from "@/hooks/useTransientError";
 
 import { useCallback, useState } from "react";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
@@ -32,7 +33,7 @@ export default function EditWantedPost() {
   const [wantedPost, setWantedPost] = useState<WantedPost | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useTransientError();
 
   const loadWantedPost = useCallback(async () => {
     if (!wantedId) {

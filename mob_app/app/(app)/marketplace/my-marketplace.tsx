@@ -1,3 +1,4 @@
+import { useTransientError } from "@/hooks/useTransientError";
 
 import { useCallback, useState } from "react";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -39,7 +40,7 @@ export default function MyMarketplace() {
   const [wantedLoading, setWantedLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useTransientError();
 
   const [processingId, setProcessingId] = useState<string | null>(null);
 

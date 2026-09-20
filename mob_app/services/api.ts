@@ -4,14 +4,20 @@ import { env } from "@/config/env";
 
 let isHandlingUnauthorized = false;
 
-function isNetworkError(error: unknown): boolean {
-  return (
-    error instanceof TypeError ||
-    (error instanceof Error &&
-      /network|fetch|connection|internet|offline|timeout/i.test(error.message))
-  );
-}
+// // ===================================================================================
+// function isNetworkError(error: unknown): boolean {
+//   if (!(error instanceof Error)) {
+//     return false;
+//   }
 
+//   const message = error.message.toLowerCase();
+
+//   return /network request failed|failed to fetch|networkerror|load failed|timeout|timed out|offline/i.test(
+//     message,
+//   );
+// }
+
+// ===================================================================================
 export function getUserFriendlyNetworkMessage(): string {
   return "We couldn't connect right now. Check your internet connection and try again.";
 }
@@ -23,6 +29,7 @@ export function isUserFriendlyNetworkError(error: unknown): boolean {
   );
 }
 
+// ===================================================================================
 async function fetchWithNetworkHandling(
   url: string,
   options: RequestInit,
@@ -30,14 +37,24 @@ async function fetchWithNetworkHandling(
   try {
     return await fetch(url, options);
   } catch (error) {
-    if (isNetworkError(error)) {
-      throw new Error(getUserFriendlyNetworkMessage());
+    console.error("API request failed:", {
+      url,
+      method: options.method ?? "GET",
+      error,
+    });
+
+    // A fetch rejection means the request never produced an HTTP Response.
+    // Preserve the original error so the calling screen can see the actual
+    // transport/browser/native failure.
+    if (error instanceof Error) {
+      throw error;
     }
 
-    throw new Error("Something went wrong while connecting. Please try again.");
+    throw new Error("The request could not be completed. Please try again.");
   }
 }
 
+// ===================================================================================
 /**
  * Authenticated API request.
  *
@@ -77,6 +94,7 @@ export async function apiFetch(
   return response;
 }
 
+// ===================================================================================
 /**
  * Public API request for authentication endpoints.
  * Unlike apiFetch, this does not attach a stored token or react to 401.
@@ -88,6 +106,7 @@ export async function publicApiFetch(
   return fetchWithNetworkHandling(`${env.BACKEND_URL}${path}`, options);
 }
 
+// ===================================================================================
 /**
  * Safely extract a useful backend message without exposing raw JSON blobs.
  */

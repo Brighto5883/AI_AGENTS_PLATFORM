@@ -1,3 +1,4 @@
+import { useTransientError } from "@/hooks/useTransientError";
 
 import { useState } from "react";
 import * as ImagePicker from "expo-image-picker";
@@ -83,7 +84,7 @@ export default function ListingForm({
 
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useTransientError();
   const [deletingImageId, setDeletingImageId] = useState<string | null>(
     null,
   );

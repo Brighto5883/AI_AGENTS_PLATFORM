@@ -134,6 +134,18 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
 
       <View className="mt-auto border-t border-gray-100 pt-4">
         <Pressable
+          onPress={() => window.location.reload()}
+          className="mb-1 flex-row items-center rounded-xl px-3 py-2.5"
+          accessibilityRole="button"
+          accessibilityLabel="Refresh page"
+        >
+          <Ionicons name="refresh-outline" size={18} color="#4b5563" />
+          <Text className="ml-3 text-sm font-semibold text-gray-700">
+            Refresh
+          </Text>
+        </Pressable>
+
+        <Pressable
           onPress={async () => {
             await logout();
             router.replace("/login");
@@ -168,19 +180,36 @@ function CompactWebHeader({ pathname }: { pathname: string }) {
           <Text className="ml-2.5 text-base font-bold text-gray-950">
             Campus Hub
           </Text>
-          <Text className="ml-3 text-sm text-gray-400">/</Text>
+          {/* <Text className="ml-3 text-sm text-gray-400">/</Text>
           <Text className="ml-3 text-sm font-semibold text-gray-600">
             {activeLabel}
-          </Text>
+          </Text> */}
         </View>
 
         <View className="flex-row items-center">
           <Pressable
-            onPress={() => router.push("/account")}
-            className="mr-2 rounded-full border border-gray-200 px-3.5 py-2"
+            onPress={() => window.location.reload()}
+            className="mr-2 rounded-full border border-gray-200 px-2 py-2"
+            accessibilityRole="button"
+            accessibilityLabel="Refresh page"
           >
-            <Text className="text-sm font-semibold text-gray-700">Account</Text>
+            <View className="flex-row items-center">
+              <Ionicons name="refresh-outline" size={15} color="#374151" />
+              <Text className="ml-1.5 text-sm font-semibold text-gray-700">
+                Refresh
+              </Text>
+            </View>
           </Pressable>
+
+          <Pressable
+            onPress={() => router.push("/account")}
+            className="mr-2 h-10 w-10 items-center justify-center rounded-full border border-gray-200"
+            accessibilityRole="button"
+            accessibilityLabel="Account"
+          >
+            <Ionicons name="person-outline" size={18} color="#374151" />
+          </Pressable>
+
           <Pressable
             onPress={async () => {
               await logout();

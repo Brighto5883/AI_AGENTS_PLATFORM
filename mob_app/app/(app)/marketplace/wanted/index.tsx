@@ -1,3 +1,4 @@
+import { useTransientError } from "@/hooks/useTransientError";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -18,8 +19,8 @@ export default function WantedPosts() {
   const [posts, setPosts] = useState<WantedPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
+  const [error, setError] = useTransientError();
+
 
   const load = useCallback(async (refresh = false) => {
     try {

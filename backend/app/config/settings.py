@@ -69,7 +69,7 @@ class Settings(BaseSettings):
 
     # Marketplace moderation
     GEMINI_SCANNER_MODEL: str = "gemini-2.5-flash-lite"
-    
+
     # DARAJA YA PESA
     MPESA_CONSUMER_KEY: str | None = None
     MPESA_CONSUMER_SECRET: str | None = None
@@ -94,7 +94,8 @@ class Settings(BaseSettings):
     "http://localhost:5173,"
     "http://localhost:8081,"
     "http://localhost:8082,"
-    "http://10.10.1.246:8082"
+    "http://10.10.1.246:8082,"
+    "https://agentic-campus-web.brighttech026.workers.dev"
 )
 
     # R2 IMAGE UPLOAD
@@ -121,7 +122,7 @@ class Settings(BaseSettings):
     local_media_directory: str = "storage"
 
     local_media_base_url: str = "http://localhost:8000"
-    
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",

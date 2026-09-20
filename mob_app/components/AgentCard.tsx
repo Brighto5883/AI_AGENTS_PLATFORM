@@ -2,6 +2,7 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import { useState } from "react";
 import { AgentResult } from "@/types/agent";
 import * as DocumentPicker from "expo-document-picker";
+import { getUserFriendlyErrorMessage } from "@/utils/errorMessages";
 import FilePicker from "@/components/FilePicker";
 import { AgentStatus } from "@/types/agent";
 
@@ -26,7 +27,7 @@ export default function AgentCard({
   const [query, setQuery] = useState("");
   const [response, setResponse] = useState<AgentResult | null>(null);
   const [agentError, setAgentError] = useState("");
-  const [selectedFile, setSelectedFile] = 
+  const [selectedFile, setSelectedFile] =
     useState<DocumentPicker.DocumentPickerAsset | null>(null);
 
   const handleRun = async () => {
@@ -46,11 +47,16 @@ export default function AgentCard({
 
       setResponse(result);
       setStatus("Completed");
-    } catch (error) {
-      console.error(`${name} failed:`, error);
 
+    } catch (error) {
       if (error instanceof Error) {
-        setAgentError(error.message);
+        setAgentError(
+          getUserFriendlyErrorMessage(
+            error,
+            "The agent couldn't complete that request. Please try again.",
+          ),
+        );
+
       } else {
         setAgentError("Agent failed. Please try again.");
       }

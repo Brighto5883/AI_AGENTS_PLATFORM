@@ -1,3 +1,4 @@
+import { useTransientError } from "@/hooks/useTransientError";
 
 import { useState } from "react";
 import { router } from "expo-router";
@@ -22,7 +23,7 @@ export default function CreateWantedPost() {
   const { user, refreshUser } = useAuth();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useTransientError();
 
   const handleSubmit = async (
     data: WantedPostFormSubmitData,

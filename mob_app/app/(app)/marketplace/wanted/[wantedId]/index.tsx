@@ -1,3 +1,4 @@
+import { useTransientError } from "@/hooks/useTransientError";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
@@ -13,14 +14,14 @@ import type { Transaction, WantedPost } from "@/types/marketplace";
 //====================================================================================
 export default function WantedDetail() {
 
-  const { wantedId } = useLocalSearchParams<{ 
-    wantedId: string 
+  const { wantedId } = useLocalSearchParams<{
+    wantedId: string
   }>();
 // ---------------------------------------------------------------------------------
   const { user } = useAuth();
   const [post, setPost] = useState<WantedPost | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useTransientError();
   const [feedbackVisible, setFeedbackVisible] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [isUnlocking, setIsUnlocking] = useState(false);
@@ -114,7 +115,7 @@ useEffect(() => {
     );
   }
 
-// --------------------------------------------------------------------------------- 
+// ---------------------------------------------------------------------------------
   if (error || !post) {
     return (
       <View className="flex-1 items-center justify-center bg-gray-50 px-6">

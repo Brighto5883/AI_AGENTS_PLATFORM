@@ -1,3 +1,4 @@
+import { useTransientError } from "@/hooks/useTransientError";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { deleteListing, getListing } from "@/services/marketplaceService";
@@ -14,6 +15,8 @@ import {
   FlatList,
   Image,
   Modal,
+  PanResponder,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -37,25 +40,25 @@ export default function ListingDetails() {
   const [listing, setListing] = useState<Listing | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useTransientError();
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
   const [feedbackVisible, setFeedbackVisible] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [connectionTransaction, setConnectionTransaction] =
   useState<Transaction | null>(null);
- // ---------------------------------------------------------------------------------   
+ // ---------------------------------------------------------------------------------
   const imageListRef =
     useRef<FlatList<Listing["images"][number]>>(null);
 
- // ---------------------------------------------------------------------------------   
+ // ---------------------------------------------------------------------------------
   const loadListing = async () => {
       try {
         setIsLoading(true);
         setError(null);
-    
+
         const data = await getListing(listingId);
-    
+
         setListing(data);
         setSelectedImageIndex(0);
       } catch (error) {
@@ -75,6 +78,29 @@ export default function ListingDetails() {
   }, [listingId]);
 
 // ---------------------------------------------------------------------------------
+  useEffect(() => {
+    if (Platform.OS !== "web" || !isImageViewerOpen) {
+      return;
+    }
+
+    window.history.pushState(
+      { imageViewer: true },
+      "",
+      window.location.href,
+    );
+
+    const handlePopState = () => {
+      setIsImageViewerOpen(false);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [isImageViewerOpen]);
+
+// ---------------------------------------------------------------------------------
   const handleUnlockContact = async () => {
     if (!listing || isUnlocking) {
       return;
@@ -87,15 +113,15 @@ export default function ListingDetails() {
       );
       return;
     }
-  
+
     try {
       setIsUnlocking(true);
       setError(null);
-  
+
       const transaction = await createListingConnection(
         listing.id,
       );
-  
+
       setConnectionTransaction(transaction);
       setPaymentModalVisible(true);
     } catch (error) {
@@ -142,6 +168,23 @@ export default function ListingDetails() {
       animated: true,
     });
   };
+
+  const webSwipeResponder = PanResponder.create({
+    onMoveShouldSetPanResponder: (_, gestureState) =>
+      Platform.OS === "web" &&
+      Math.abs(gestureState.dx) > 10 &&
+      Math.abs(gestureState.dx) > Math.abs(gestureState.dy),
+
+    onPanResponderRelease: (_, gestureState) => {
+      const SWIPE_THRESHOLD = 50;
+
+      if (gestureState.dx > SWIPE_THRESHOLD) {
+        showPreviousImage();
+      } else if (gestureState.dx < -SWIPE_THRESHOLD) {
+        showNextImage();
+      }
+    },
+  });
 
   // ---------------------------------------------------------------------------------
   const selectThumbnail = (index: number) => {
@@ -374,107 +417,228 @@ export default function ListingDetails() {
       />
 
       {/* Fullscreen image viewer */}
-      <Modal
-        visible={isImageViewerOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() =>
-          setIsImageViewerOpen(false)
-        }
-      >
-        <View className="flex-1 bg-black">
-          {/* Close button */}
-          <Pressable
-            onPress={() =>
-              setIsImageViewerOpen(false)
-            }
-            className="absolute right-5 top-12 z-30 h-11 w-11 items-center justify-center rounded-full bg-white/20"
+      {Platform.OS === "web" ? (
+        <Modal
+          visible={isImageViewerOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setIsImageViewerOpen(false)}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.92)",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 24,
+            }}
           >
-            <Text className="text-2xl font-bold text-white">
-              ×
-            </Text>
-          </Pressable>
+            {/* Close button */}
+            <Pressable
+              onPress={() => setIsImageViewerOpen(false)}
+              style={{
+                position: "absolute",
+                top: 20,
+                right: 24,
+                zIndex: 20,
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: "rgba(255,255,255,0.15)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text
+                style={{
+                  color: "white",
+                  fontSize: 24,
+                  lineHeight: 24,
+                }}
+              >
+                ×
+              </Text>
+            </Pressable>
 
-          {/* Image counter */}
-          <View className="absolute left-0 right-0 top-14 z-20 items-center">
-            <View className="rounded-full bg-black/60 px-4 py-2">
-              <Text className="text-sm font-semibold text-white">
-                {selectedImageIndex + 1} /{" "}
-                {listing.images.length}
+            {/* Image counter */}
+            <View
+              style={{
+                position: "absolute",
+                top: 28,
+                left: 24,
+                zIndex: 20,
+              }}
+            >
+              <Text
+                style={{
+                  color: "white",
+                  fontSize: 14,
+                  fontWeight: "600",
+                }}
+              >
+                {selectedImageIndex + 1} / {listing.images.length}
+              </Text>
+            </View>
+
+            {/* Image area */}
+            <View
+              {...webSwipeResponder.panHandlers}
+              style={{
+                width: "100%",
+                height: "82%",
+                maxWidth: 1100,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Image
+                source={{ uri: selectedImage?.url }}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                }}
+                resizeMode="contain"
+              />
+            </View>
+
+            {/* Previous */}
+            {selectedImageIndex > 0 && (
+              <Pressable
+                onPress={showPreviousImage}
+                style={{
+                  position: "absolute",
+                  left: 24,
+                  top: "50%",
+                  marginTop: -24,
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  backgroundColor: "rgba(255,255,255,0.15)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    color: "white",
+                    fontSize: 32,
+                    lineHeight: 32,
+                  }}
+                >
+                  ‹
+                </Text>
+              </Pressable>
+            )}
+
+            {/* Next */}
+            {selectedImageIndex < listing.images.length - 1 && (
+              <Pressable
+                onPress={showNextImage}
+                style={{
+                  position: "absolute",
+                  right: 24,
+                  top: "50%",
+                  marginTop: -24,
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  backgroundColor: "rgba(255,255,255,0.15)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    color: "white",
+                    fontSize: 32,
+                    lineHeight: 32,
+                  }}
+                >
+                  ›
+                </Text>
+              </Pressable>
+            )}
+          </View>
+        </Modal>
+      ) : (
+        <Modal
+          visible={isImageViewerOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setIsImageViewerOpen(false)}
+        >
+          <View className="flex-1 bg-black">
+            <FlatList
+              ref={imageListRef}
+              data={listing.images}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              initialScrollIndex={selectedImageIndex}
+              keyExtractor={(item) => item.id}
+              getItemLayout={(_, index) => ({
+                length: width,
+                offset: width * index,
+                index,
+              })}
+              onMomentumScrollEnd={(event) => {
+                const index = Math.round(
+                  event.nativeEvent.contentOffset.x / width,
+                );
+
+                setSelectedImageIndex(index);
+              }}
+              renderItem={({ item }) => (
+                <View
+                  style={{ width }}
+                  className="flex-1 items-center justify-center"
+                >
+                  <Image
+                    source={{ uri: item.url }}
+                    className="h-full w-full"
+                    resizeMode="contain"
+                  />
+                </View>
+              )}
+            />
+
+            {/* Close */}
+            <Pressable
+              onPress={() => setIsImageViewerOpen(false)}
+              className="absolute right-5 top-12 z-20 h-11 w-11 items-center justify-center rounded-full bg-white/20"
+            >
+              <Text className="text-2xl text-white">×</Text>
+            </Pressable>
+
+            {/* Previous */}
+            {selectedImageIndex > 0 && (
+              <Pressable
+                onPress={showPreviousImage}
+                className="absolute left-4 top-1/2 z-20 h-12 w-12 items-center justify-center rounded-full bg-white/20"
+              >
+                <Text className="text-3xl text-white">‹</Text>
+              </Pressable>
+            )}
+
+            {/* Next */}
+            {selectedImageIndex < listing.images.length - 1 && (
+              <Pressable
+                onPress={showNextImage}
+                className="absolute right-4 top-1/2 z-20 h-12 w-12 items-center justify-center rounded-full bg-white/20"
+              >
+                <Text className="text-3xl text-white">›</Text>
+              </Pressable>
+            )}
+
+            {/* Counter */}
+            <View className="absolute bottom-8 left-0 right-0 items-center">
+              <Text className="font-semibold text-white">
+                {selectedImageIndex + 1} / {listing.images.length}
               </Text>
             </View>
           </View>
-
-          {/* Swipeable images */}
-          <FlatList
-            ref={imageListRef}
-            data={listing.images}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            initialScrollIndex={selectedImageIndex}
-            keyExtractor={(item) => item.id}
-            getItemLayout={(_, index) => ({
-              length: width,
-              offset: width * index,
-              index,
-            })}
-            onMomentumScrollEnd={(event) => {
-              const index = Math.round(
-                event.nativeEvent.contentOffset.x /
-                  width
-              );
-
-              setSelectedImageIndex(index);
-            }}
-            renderItem={({ item }) => (
-              <View
-                style={{ width }}
-                className="flex-1 items-center justify-center"
-              >
-                <Image
-                  source={{
-                    uri: item.url,
-                  }}
-                  className="h-full w-full"
-                  resizeMode="contain"
-                />
-              </View>
-            )}
-          />
-
-          {/* Previous arrow */}
-          {selectedImageIndex > 0 && (
-            <Pressable
-              onPress={showPreviousImage}
-              className="absolute left-5 top-1/2 z-30 h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/25"
-              style={({ pressed }) => ({
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <Text className="text-3xl font-bold text-gray-900">
-                ‹
-              </Text>
-            </Pressable>
-          )}
-
-          {/* Next arrow */}
-          {selectedImageIndex <
-            listing.images.length - 1 && (
-            <Pressable
-              onPress={showNextImage}
-              className="absolute right-5 top-1/2 z-30 h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/25"
-              style={({ pressed }) => ({
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <Text className="text-3xl font-bold text-gray-900">
-                ›
-              </Text>
-            </Pressable>
-          )}
-        </View>
-      </Modal>
+        </Modal>
+      )}
 
       {/* Marketplace Modal */}
       <MarketplacePaymentModal
@@ -489,6 +653,6 @@ export default function ListingDetails() {
         }}
       />
     </ScrollView>
-    
+
   );
 }
