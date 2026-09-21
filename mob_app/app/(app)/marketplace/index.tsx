@@ -20,7 +20,6 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-
 import {
   categories,
   type Listing,
@@ -154,6 +153,7 @@ export default function Marketplace() {
   const [feedbackVisible, setFeedbackVisible] = useState(false);
   const [billingInfo, setBillingInfo] = useState<MarketplaceBillingInfo | null>(null);
 
+  
   useEffect(() => {
     void getMarketplaceBillingInfo().then(setBillingInfo).catch(() => undefined);
   }, []);

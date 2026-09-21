@@ -161,11 +161,11 @@ export default function Home() {
           {/* MARKETPLACE BILLING NOTICE */}
           {/* ========================================================= */}
 
-          {billingInfo ? (
+          {/* {billingInfo ? (
             <View className="mb-6">
               <MarketplaceBillingNotice billing={billingInfo} />
             </View>
-          ) : null}
+          ) : null} */}
 
           {/* ========================================================= */}
           {/* SERVICES */}

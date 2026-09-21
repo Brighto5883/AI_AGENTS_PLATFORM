@@ -141,7 +141,7 @@ useEffect(() => {
         {post.description}
       </Text>
 
-      // ---------------------------------------------------------------------------------
+
       {/* Contact Seller/Buyer */}
       <ContactActions
         phone={post.requester.phone}
@@ -153,7 +153,7 @@ useEffect(() => {
         isUnlocking={isUnlocking}
       />
 
-// ---------------------------------------------------------------------------------
+
       <View className="mt-5 rounded-2xl border border-gray-200 bg-white p-4">
         <Text className="text-sm font-bold text-gray-950">
           Something wrong with this request?
@@ -177,7 +177,7 @@ useEffect(() => {
         screen="marketplace_wanted"
       />
 
-// ---------------------------------------------------------------------------------
+
       {/* Payment Modal */}
       <MarketplacePaymentModal
         visible={paymentModalVisible}

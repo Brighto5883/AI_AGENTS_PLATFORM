@@ -57,14 +57,14 @@ class Settings(BaseSettings):
     marketplace_billing_enabled: bool = False
     marketplace_default_billing_mode: str = "connection_fee"
     marketplace_currency: str = "KES"
-    marketplace_subscription_monthly_fee: Decimal = Decimal("549.00")
+    marketplace_subscription_monthly_fee: Decimal = Decimal("999.00")
     marketplace_connection_fee: Decimal = Decimal("25.00")
     marketplace_listing_fee_per_item: Decimal = Decimal("25.00")
     marketplace_billing_notice_title: str = "Marketplace is currently free"
     marketplace_billing_notice_message: str = (
         "You can currently include contact details in selling listings. "
         "When paid marketplace services begin, contact sharing in listings may be restricted."
-        "Wanted Posts remain free to create, but contact details are protected so sellers can connect through the marketplace.."
+        "All posts are now free to create, but contact details will be protected later so sellers can connect in a monitored way through the marketplace.."
     )
 
     # Marketplace moderation
