@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const DEFAULT_ERROR_DURATION_MS = 4000;
+const DEFAULT_ERROR_DURATION_MS = 20000;
 
 export function useTransientError(
   durationMs = DEFAULT_ERROR_DURATION_MS,
