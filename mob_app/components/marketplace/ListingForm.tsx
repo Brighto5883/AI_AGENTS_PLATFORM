@@ -1,4 +1,5 @@
 import { useTransientError } from "@/hooks/useTransientError";
+import { validatePhone } from "@/utils/phone";
 
 import { useState } from "react";
 import * as ImagePicker from "expo-image-picker";
@@ -115,6 +116,13 @@ export default function ListingForm({
       return;
     }
 
+    const phoneValidationError = validatePhone(phone);
+
+    if (phoneValidationError) {
+      setPhoneError(phoneValidationError);
+      return;
+    }
+
     try {
       await onSubmit({
         title: title.trim(),
@@ -142,7 +150,7 @@ export default function ListingForm({
     const remainingSlots = MAX_LISTING_IMAGES - totalImages;
 
     if (remainingSlots <= 0) {
-      setError(`You can have at most ${MAX_LISTING_IMAGES} images.`);
+      setError(`A listing can have up to ${MAX_LISTING_IMAGES} photos.`);
       return;
     }
 
@@ -156,14 +164,24 @@ export default function ListingForm({
     });
 
     if (!result.canceled) {
-      setImages((currentImages) => {
-        const combinedImages = [
-          ...currentImages,
-          ...result.assets,
-        ];
+      const maxNewImages = MAX_LISTING_IMAGES - existingImages.length;
+      const remainingAfterCurrentSelection =
+        Math.max(0, maxNewImages - images.length);
+      const imagesToAdd = result.assets.slice(
+        0,
+        remainingAfterCurrentSelection,
+      );
 
-        return combinedImages.slice(0, remainingSlots);
-      });
+      if (result.assets.length > remainingAfterCurrentSelection) {
+        setError(
+          `A listing can have up to ${MAX_LISTING_IMAGES} photos. Only ${remainingAfterCurrentSelection} ${remainingAfterCurrentSelection === 1 ? "photo was" : "photos were"} added.`,
+        );
+      }
+
+      setImages((currentImages) => [
+        ...currentImages,
+        ...imagesToAdd,
+      ]);
     }
   };
 
@@ -272,7 +290,12 @@ export default function ListingForm({
       {/* Phone */}
       <PhoneNumberField
         value={phone}
-        onChange={setPhone}
+        onChange={(value) => {
+          setPhone(value);
+          if (phoneError) {
+            setPhoneError(null);
+          }
+        }}
         hasStoredNumber={Boolean(initialPhone)}
         error={phoneError}
       />

@@ -90,7 +90,7 @@ export default function EditListing() {
           phone: normalizedPhone,
         });
 
-        await refreshUser();
+        void refreshUser().catch(() => undefined);
       }
 
       await updateListing(listingId, {

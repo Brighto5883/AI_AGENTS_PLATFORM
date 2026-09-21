@@ -37,7 +37,7 @@ export default function CreateListing() {
           phone: normalizedPhone,
         });
 
-        await refreshUser();
+        void refreshUser().catch(() => undefined);
       }
 
       await createListing({

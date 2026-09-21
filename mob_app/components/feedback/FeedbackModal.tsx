@@ -132,8 +132,8 @@ export default function FeedbackModal({
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <View className="flex-1 justify-center bg-black/60 px-4">
-          <View className="max-h-[92%] overflow-hidden rounded-3xl border-2 border-gray-300 bg-white shadow-lg">
-            <View className="p-6">
+          <View className="h-[90%] w-full overflow-hidden rounded-3xl border-2 border-gray-300 bg-white shadow-lg">
+            <View className="flex-1 min-h-0 p-6">
               <Pressable
                 onPress={handleClose}
                 disabled={isSubmitting}
@@ -172,9 +172,11 @@ export default function FeedbackModal({
                 </View>
               ) : (
                 <ScrollView
-                  showsVerticalScrollIndicator={false}
+                  className="flex-1"
+                  showsVerticalScrollIndicator
                   keyboardShouldPersistTaps="handled"
-                  contentContainerClassName="pb-2"
+                  keyboardDismissMode="on-drag"
+                  contentContainerStyle={{ paddingBottom: 24 }}
                 >
                   <Text className="pr-10 text-2xl font-bold text-gray-950">
                     {title}

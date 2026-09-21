@@ -17,6 +17,7 @@ import { router } from "expo-router";
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const [error, setError] = useTransientError();
@@ -149,17 +150,30 @@ export default function Register() {
               Password
             </Text>
 
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              placeholder="At least 8 characters"
-              placeholderTextColor="#9ca3af"
-              autoComplete="new-password"
-              textContentType="newPassword"
-              importantForAutofill="yes"
-              secureTextEntry
-              className="mb-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-gray-900"
-            />
+            <View className="mb-2 flex-row items-center rounded-xl border border-gray-200 bg-gray-50">
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                placeholder="At least 8 characters"
+                placeholderTextColor="#9ca3af"
+                autoComplete="new-password"
+                textContentType="newPassword"
+                importantForAutofill="yes"
+                secureTextEntry={!showPassword}
+                className="flex-1 px-4 py-3.5 text-gray-900"
+              />
+
+              <Pressable
+                onPress={() => setShowPassword((visible) => !visible)}
+                accessibilityRole="button"
+                accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                className="px-4 py-3.5"
+              >
+                <Text className="text-sm font-semibold text-gray-600">
+                  {showPassword ? "Hide" : "Show"}
+                </Text>
+              </Pressable>
+            </View>
 
             {passwordError ? (
               <Text className="mb-4 text-sm text-red-600">
