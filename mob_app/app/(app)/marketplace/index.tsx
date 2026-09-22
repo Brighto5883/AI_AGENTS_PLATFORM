@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useState } from "react";
 import { router } from "expo-router";
 import FeedbackButton from "@/components/feedback/feedbackButton";
+import ClosedTestGuide from "@/components/web/ClosedTestGuide";
 import SupportContacts from "@/components/SupportContacts";
 import FeedbackModal from "@/components/feedback/FeedbackModal";
 import ListingCard from "@/components/marketplace/ListingCard";
@@ -397,6 +398,7 @@ export default function Marketplace() {
   return (
     <View className="flex-1 bg-gray-50">
       <FlatList
+        style={{ flex: 1, minHeight: 0 }}
         key={listingColumns}
         data={listings}
         numColumns={listingColumns}
@@ -584,6 +586,20 @@ export default function Marketplace() {
             />
 
             <SupportContacts />
+
+            <View className="mt-4 rounded-2xl border border-gray-200 bg-white p-4">
+              <View className="flex-row items-center justify-between">
+                <View className="mr-4 flex-1">
+                  <Text className="text-sm font-bold text-gray-950">
+                    Try the Bikven Android app
+                  </Text>
+                  <Text className="mt-1 text-xs leading-4 text-gray-500">
+                    Join the closed test and install the Android app from Google Play.
+                  </Text>
+                </View>
+                <ClosedTestGuide compact />
+              </View>
+            </View>
 
         {/* ================================================================
             Search

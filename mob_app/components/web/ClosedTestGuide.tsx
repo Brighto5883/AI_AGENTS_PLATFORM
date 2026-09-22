@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image, Linking, Modal, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { Image, Linking, Modal, Platform, Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
 import { useState } from "react";
 
 const GOOGLE_GROUP_URL =
@@ -44,6 +44,8 @@ const steps = [
 
 export default function ClosedTestGuide({ compact = false }: { compact?: boolean }) {
   const [visible, setVisible] = useState(false);
+  const { width } = useWindowDimensions();
+  const showCompactLabel = width >= 700;
 
   if (Platform.OS !== "web") {
     return null;
@@ -72,12 +74,12 @@ export default function ClosedTestGuide({ compact = false }: { compact?: boolean
         accessibilityLabel="How to join the Bikven Android test"
       >
         <Ionicons
-          name="phone-portrait-outline"
-          size={compact ? 16 : 18}
+          name="logo-google-playstore"
+          size={compact ? 18 : 20}
           color="#374151"
         />
         <Text className={compact ? "ml-1.5 text-sm font-semibold text-gray-700" : "ml-3 text-sm font-semibold text-gray-700"}>
-          {compact ? "Android test" : "Join Android test"}
+          {compact ? (showCompactLabel ? "Android app" : null) : "Join Android test"}
         </Text>
       </Pressable>
 
@@ -96,7 +98,7 @@ export default function ClosedTestGuide({ compact = false }: { compact?: boolean
               <View className="mr-4 flex-1">
                 <View className="flex-row items-center">
                   <View className="h-10 w-10 items-center justify-center rounded-xl bg-gray-950">
-                    <Ionicons name="phone-portrait-outline" size={20} color="#ffffff" />
+                    <Ionicons name="logo-google-playstore" size={20} color="#ffffff" />
                   </View>
                   <View className="ml-3 flex-1">
                     <Text className="text-xl font-bold text-gray-950">
