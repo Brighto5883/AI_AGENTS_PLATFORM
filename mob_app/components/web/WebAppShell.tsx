@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 
+import ClosedTestGuide from "@/components/web/ClosedTestGuide";
 import { services } from "@/config/services";
 import { useAuth } from "@/context/AuthContext";
 
@@ -133,6 +134,8 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
       </ScrollView>
 
       <View className="mt-auto border-t border-gray-100 pt-4">
+        <ClosedTestGuide />
+
         <Pressable
           onPress={() => window.location.reload()}
           className="mb-1 flex-row items-center rounded-xl px-3 py-2.5"
@@ -187,6 +190,8 @@ function CompactWebHeader({ pathname }: { pathname: string }) {
         </View>
 
         <View className="flex-row items-center">
+          <ClosedTestGuide compact />
+
           <Pressable
             onPress={() => window.location.reload()}
             className="mr-2 rounded-full border border-gray-200 px-2 py-2"
