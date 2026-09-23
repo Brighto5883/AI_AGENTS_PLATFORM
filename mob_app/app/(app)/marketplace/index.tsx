@@ -73,7 +73,7 @@ type MarketplaceAction = {
 const marketplaceActions: MarketplaceAction[] = [
   {
     title: "SELL SOMETHING",
-    description: "List an item you want to sell.",
+    description: "Tap to create a listing and put your item up for sale.",
     icon: "pricetag-outline",
     iconColor: "#2563eb",
     iconBackground: "#dbeafe",
@@ -82,7 +82,7 @@ const marketplaceActions: MarketplaceAction[] = [
 
   {
     title: "BUY SOMETHING",
-    description: "Browse everything currently for sale.",
+    description: "Tap to browse items currently available from the campus community.",
     icon: "bag-handle-outline",
     iconColor: "#0891b2",
     iconBackground: "#cffafe",
@@ -91,7 +91,7 @@ const marketplaceActions: MarketplaceAction[] = [
 
   {
     title: "REQUIRED BY BUYERS",
-    description: "Look what buyers are asking for.",
+    description: "Tap to see what buyers are currently looking for.",
     icon: "search-outline",
     iconColor: "#16a34a",
     iconBackground: "#dcfce7",
@@ -99,7 +99,7 @@ const marketplaceActions: MarketplaceAction[] = [
   },
   {
     title: "POST WHAT YOU REQUIRE",
-    description: "Post any item you need and sellers will reach out.",
+    description: "Tap to post what you need so sellers can find you.",
     icon: "create-outline",
     iconColor: "#9333ea",
     iconBackground: "#f3e8ff",
@@ -107,7 +107,7 @@ const marketplaceActions: MarketplaceAction[] = [
   },
   {
     title: "VIEW YOUR POSTS",
-    description: "Manage all your listings posts here.",
+    description: "Tap to edit, mark sold, delete and manage your marketplace posts.",
     icon: "person-outline",
     iconColor: "#ea580c",
     iconBackground: "#ffedd5",
@@ -534,11 +534,23 @@ export default function Marketplace() {
 
                     {/* Description */}
                     <Text
-                      numberOfLines={2}
+                      numberOfLines={3}
                       className="mt-1 text-xs leading-4 text-gray-500"
                     >
                       {action.description}
                     </Text>
+
+                    <View className="mt-3 flex-row items-center">
+                      <Text className="text-xs font-bold text-gray-950">
+                        Tap to open
+                      </Text>
+                      <Ionicons
+                        name="arrow-forward"
+                        size={14}
+                        color="#111827"
+                        style={{ marginLeft: 4 }}
+                      />
+                    </View>
                   </Pressable>
                 ))}
               </View>

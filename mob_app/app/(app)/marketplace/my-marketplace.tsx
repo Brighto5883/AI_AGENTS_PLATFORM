@@ -16,6 +16,7 @@ import {
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -43,6 +44,10 @@ export default function MyMarketplace() {
   const [error, setError] = useTransientError();
 
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<
+    | { type: "sold" | "delete"; listing: Listing }
+    | null
+  >(null);
 
   //==================================================================================
   // Load user's listings
@@ -120,108 +125,53 @@ export default function MyMarketplace() {
   };
 
   //==================================================================================
-  // Mark listing as sold
+  // Listing actions
   //==================================================================================
 
   const handleMarkSold = (listing: Listing) => {
-    Alert.alert(
-      "Mark as sold",
-      `Mark "${listing.title}" as sold?
-
-It will immediately disappear from the public marketplace. You can still manage it from My Marketplace for 7 days, after which it will be permanently deleted.`,
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Mark as sold",
-          onPress: async () => {
-            try {
-              setProcessingId(listing.id);
-
-              const updatedListing = await markListingSold(listing.id);
-
-              setListings((current) =>
-                current.map((item) =>
-                  item.id === listing.id
-                    ? updatedListing
-                    : item,
-                ),
-              );
-
-              const deletionDate = updatedListing.scheduled_deletion_at
-                ? new Date(
-                    updatedListing.scheduled_deletion_at,
-                  ).toLocaleDateString("en-KE", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })
-                : "7 days from now";
-
-              Alert.alert(
-                "Listing marked as sold",
-                `This listing is hidden from the marketplace and is scheduled for permanent deletion on ${deletionDate}.`,
-              );
-            } catch (err) {
-              Alert.alert(
-                "Error",
-                err instanceof Error
-                  ? err.message
-                  : "Failed to mark listing as sold.",
-              );
-            } finally {
-              setProcessingId(null);
-            }
-          },
-        },
-      ],
-    );
+    setPendingAction({ type: "sold", listing });
   };
 
-//==================================================================================
-// Delete listing
-//==================================================================================
+  const handleDeleteListing = (listing: Listing) => {
+    setPendingAction({ type: "delete", listing });
+  };
 
-const handleDeleteListing = (listing: Listing) => {
-  Alert.alert(
-    "Delete listing",
-    `Are you sure you want to permanently delete "${listing.title}"?`,
-    [
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            setProcessingId(listing.id);
+  const confirmListingAction = async () => {
+    if (!pendingAction || processingId) {
+      return;
+    }
 
-            await deleteListing(listing.id);
+    const { type, listing } = pendingAction;
+    setPendingAction(null);
+    setProcessingId(listing.id);
+    setError(null);
 
-            setListings((current) =>
-              current.filter(
-                (item) => item.id !== listing.id,
-              ),
-            );
-          } catch (err) {
-            Alert.alert(
-              "Error",
-              err instanceof Error
-                ? err.message
-                : "Failed to delete listing.",
-            );
-          } finally {
-            setProcessingId(null);
-          }
-        },
-      },
-    ],
-  );
-};
+    try {
+      if (type === "sold") {
+        const updatedListing = await markListingSold(listing.id);
+        setListings((current) =>
+          current.map((item) =>
+            item.id === listing.id ? updatedListing : item,
+          ),
+        );
+      } else {
+        await deleteListing(listing.id);
+        setListings((current) =>
+          current.filter((item) => item.id !== listing.id),
+        );
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : type === "sold"
+            ? "Failed to mark listing as sold."
+            : "Failed to delete listing.",
+      );
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
 //==================================================================================
 // Mark wanted post as fulfilled
@@ -331,7 +281,8 @@ const handleDeleteListing = (listing: Listing) => {
   //==================================================================================
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <>
+      <View className="flex-1 bg-gray-50">
       {/* Header */}
       <View className="border-b border-gray-200 bg-white px-5 pb-4 pt-4">
         <Text className="text-2xl font-bold text-gray-950">
@@ -634,6 +585,51 @@ const handleDeleteListing = (listing: Listing) => {
           ))
         )}
       </ScrollView>
-    </View>
+      </View>
+
+      <Modal
+        visible={pendingAction !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          if (!processingId) setPendingAction(null);
+        }}
+      >
+        <View className="flex-1 items-center justify-center bg-black/50 px-5">
+          <View className="w-full max-w-md rounded-2xl bg-white p-6">
+            <Text className="text-xl font-bold text-gray-950">
+              {pendingAction?.type === "sold"
+                ? "Mark listing as sold?"
+                : "Delete listing?"}
+            </Text>
+            <Text className="mt-2 text-sm leading-5 text-gray-600">
+              {pendingAction?.type === "sold"
+                ? `Mark “${pendingAction.listing.title}” as sold? It will disappear from the public marketplace and remain in My Marketplace for 7 days before permanent deletion.`
+                : `Permanently delete “${pendingAction?.listing.title ?? "this listing"}”? This cannot be undone.`}
+            </Text>
+            <View className="mt-6 flex-row gap-3">
+              <Pressable
+                onPress={() => setPendingAction(null)}
+                disabled={processingId !== null}
+                className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3"
+              >
+                <Text className="text-center font-semibold text-gray-700">Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => void confirmListingAction()}
+                disabled={processingId !== null}
+                className={pendingAction?.type === "delete"
+                  ? "flex-1 rounded-xl bg-red-600 px-4 py-3"
+                  : "flex-1 rounded-xl bg-gray-950 px-4 py-3"}
+              >
+                <Text className="text-center font-semibold text-white">
+                  {pendingAction?.type === "sold" ? "Mark Sold" : "Delete"}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
