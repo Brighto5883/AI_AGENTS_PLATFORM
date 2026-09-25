@@ -98,6 +98,7 @@ class Settings(BaseSettings):
     "https://agentic-campushub-web.brighttech026.workers.dev,"
     "https://bikven.com,"
     "https://campuske.bikven.com,"
+    "https://campushub.bikven.com,"
 )
 
     # R2 IMAGE UPLOAD
